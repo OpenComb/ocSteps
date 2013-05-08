@@ -1,8 +1,8 @@
 # ocSteps
 
-__ocSteps__ 参考了 Step 的设计，但是规则更简单。ocSteps 是为复杂、动态的任务链而设计。
+__ocSteps__ 参考了 [Step](https://github.com/creationix/step) 的设计，但是规则更简单。ocSteps 是为复杂、动态的任务链而设计。
 
-Step, Sync 等库对静态的任务链结构支持得非常好，尤其是 Step 简单而优雅。
+[Step](https://github.com/creationix/step), [Async.js](https://github.com/caolan/async) 等库对静态的任务链结构支持得非常好，尤其是 Step 简单而优雅。
 
 相比起 Step ，ocSteps 有以下特点：
 
