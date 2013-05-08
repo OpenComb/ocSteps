@@ -62,10 +62,12 @@ steps(
 ```
 
 输出的结果是：
+
+```
 step 1
 step 2
 step 3
-
+```
 
 ## 异步操作：this.fork()
 
@@ -426,13 +428,13 @@ steps(
 
 以下情况发生的错误会被自动搜集起来，自动串连成一个错误链：
 
-	* 传给step函数的第一个参数为 Error对象：arguments[0].constructor===Error
+* 传给step函数的第一个参数为 Error对象：arguments[0].constructor===Error
 
-	* `this.fork()` 收到的回调参数中的第一个参数如果是字符串，则将这个字符串做为错误消息转换成Error对象，加以搜集
-		node.js api 里很多异步函数，其回调的第一个参数是一个字符串格式的错误消息，例如：`fs.readFile()`；但这个约定也有例外，例如：`fs.exits()`。
-		ocSteps 只自动搜集字符串类型的第一个回调参数，并且，可以通过 `this.fork(false)` 来禁用自动搜集错误。
+* `this.fork()` 收到的回调参数中的第一个参数如果是字符串，则将这个字符串做为错误消息转换成Error对象，加以搜集
+	node.js api 里很多异步函数，其回调的第一个参数是一个字符串格式的错误消息，例如：`fs.readFile()`；但这个约定也有例外，例如：`fs.exits()`。
+	ocSteps 只自动搜集字符串类型的第一个回调参数，并且，可以通过 `this.fork(false)` 来禁用自动搜集错误。
 
-	* step函数执行堆栈上未处理的异常
+* step函数执行堆栈上未处理的异常
 
 
 
