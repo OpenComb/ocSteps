@@ -2,29 +2,29 @@
 
 __ocSteps__ 参考了 [Step](https://github.com/creationix/step) 的设计，但是规则更简单，ocSteps 是为复杂、动态的任务链而设计。
 
-[Step](https://github.com/creationix/step), [Async.js](https://github.com/caolan/async) 等库对静态的任务链结构支持得非常好，尤其是 Step 简单而优雅。 相比起 [Step](https://github.com/creationix/step) ，ocSteps 有以下特点：
+[Step](https://github.com/creationix/step), [Async.js](https://github.com/caolan/async) 等库对静态的任务链结构支持得非常好，尤其是 Step 简单而优雅。 相比起 [Step](https://github.com/creationix/step) ，ocSteps 具有以下特点：
 
-___简化了：___
+* ___简化了：___
 
-* 取消了 group(),parallel()，仅使用用 this.fork() 来处理异步情况
+	* 取消了 group(),parallel()，仅使用用 this.fork() 来处理异步情况
+	
+	* 不通过需要根据step函数的返回值来决定是否立即执行下一个step函数
 
-* 不通过判断step函数的返回值来决定是否立即执行下一个step函数，只要调用过 this.fork() 任务链就会等待回调
 
 
+* ___增强了：___
 
-___增强了：___
-
-* 可以在任务执行过程中插入step
-
-* 可以为step预设参数，这对循环非常有用
-
-* 自动搜集错误，并且用 prev 属性将所有错误串联起来
-
-* 任务链的终止操作：this.terminate()
-
-* 事件：done
-
-* 支持并入另外一个任务链作为一个step
+	* 可以在任务执行过程中插入step
+	
+	* 可以为step预设参数，这对循环非常有用
+	
+	* 自动搜集错误，并且用 prev 属性将所有错误串联起来
+	
+	* 任务链的终止操作：this.terminate()
+	
+	* 事件：done
+	
+	* 支持并入另外一个任务链作为一个step
 
 
 ## 安装
