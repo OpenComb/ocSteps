@@ -23,9 +23,9 @@ exports.Steps.prototype = new events.EventEmitter ;
 
 exports.Steps.prototype.step = function()
 {
-	for(var i=0;i<arguments.length;i++)
+	for(var i=arguments.length-1;i>=0;i--)
 	{
-		this._steps.push(arguments[i]) ;
+		this._steps.unshift(arguments[i]) ;
 	}
 	return this ;
 }

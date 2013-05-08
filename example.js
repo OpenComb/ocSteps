@@ -1,31 +1,75 @@
 var steps = require("./index.js") ;
+var fs = require("fs") ;
+
+
+
+//steps(
+//
+//	function(){
+//		fs.exists("/some/file/path",this.fork()) ;
+//	}
+//
+//	, function(exists){
+//		console.log("fs.exists() return: "+exists) ;
+//	}
+//
+//) ;
+
+
+
 
 steps(
 
 	function(){
-		return new Error("As step function's return") ;
+
+		console.log("insert 3 step functions one time: ") ;
+
+		// 一次向任务链插入多个step函数
+		this.step(
+			function(){
+				console.log("a") ;
+			}
+			, function(){
+				console.log("b") ;
+			}
+			, function(){
+				console.log("c") ;
+			}
+		) ;
 	}
 
-	,  function(){
+	, function(){
 
-		function someAsyncOperation(callback)
-		{
-			setTimeout(function(){
-				callback( new Error("As first arg of callback") ) ;
-			},0) ;
-		}
+		console.log("insert 3 step functions one by one: ") ;
 
-		someAsyncOperation( this.fork() ) ;
+		// 陆续向任务链插入函数
+		this.step(function(){
+			console.log("1") ;
+		}) ;
+		this.step(function(){
+			console.log("2") ;
+		}) ;
+		this.step(function(){
+			console.log("3") ;
+		}) ;
 	}
 
-	,  function(){
-		throw {error:"As a exception object"} ;
-	}
+) ;
 
-).on("done",function(lastError){
-	// 将所有错误打印出来
-	for( var error=lastError; error; error=error.prev )
-	{
-		console.log(lastError) ;
-	}
-})
+
+
+//
+//steps(
+//
+//	function(){
+//		console.log( new Date() ) ;
+//		setTimeout(this.fork(),1000) ;
+//		setTimeout(this.fork(),2000) ;
+//		setTimeout(this.fork(),3000) ;
+//	}
+//
+//	, function(){
+//		console.log( new Date() ) ;
+//	}
+//
+//) ;
