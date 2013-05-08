@@ -4,7 +4,7 @@ var events = require("events") ;
 exports = module.exports = function()
 {
 	var steps = new exports.Steps ;
-	return steps.step.apply(steps,arguments).do() ;
+	return steps.step.apply(steps,arguments)._next() ;
 }
 
 
@@ -15,6 +15,7 @@ exports.Steps = function()
 	this._hold = 0 ;
 	this.error = undefined ;
 	this._bindo = this.do.bind(this) ;
+	this.silence = false ;
 
 	events.EventEmitter.apply(this) ;
 } ;
@@ -31,7 +32,10 @@ exports.Steps.prototype.step = function()
 }
 exports.Steps.prototype.appendStep = function()
 {
-	this._steps = this._steps.concat(arguments) ;
+	for(var i=0;i<arguments.length;i++)
+	{
+		this._steps.push(arguments[i]) ;
+	}
 	return this ;
 }
 
@@ -52,12 +56,17 @@ exports.Steps.prototype.hold = function()
 exports.Steps.prototype.release = function()
 {
 	this._hold -- ;
-	this.do() ;
-	return this ;
+	return this._next() ;
 }
 
 exports.Steps.prototype.setError = function(err)
 {
+	if( !this.silence )
+	{
+		console.log(err) ;
+		err.stack && console.log(err.stack) ;
+	}
+
 	err.prev = this.error ;
 	this.error = err ;
 	return this ;
@@ -67,7 +76,7 @@ exports.Steps.prototype.setStepReturn = function(stepReturn,dontAutoCollectErr)
 {
 	if(!dontAutoCollectErr)
 	{
-		if(stepReturn.constructor===Error)
+		if( stepReturn&&stepReturn.constructor===Error )
 		{
 			this.setError(stepReturn) ;
 		}
@@ -94,15 +103,14 @@ exports.Steps.prototype.terminate = function()
 
 exports.Steps.prototype.do = function()
 {
+	if(this._hold)
+	{
+		return this ;
+	}
+
 	if(!this._steps.length)
 	{
 		this.emit("done",this.error) ;
-		return this ;
-	}
-	
-	if(this._hold)
-	{
-		// waiting
 		return this ;
 	}
 	
@@ -133,7 +141,16 @@ exports.Steps.prototype.do = function()
 		}
 	}
 	
-	// next
+	return this._next() ;
+}
+
+exports.Steps.prototype._next = function()
+{
+	if( this._hold )
+	{
+		return ;
+	}
+
 	if( process&&process.nextTick )
 	{
 		process.nextTick(this._bindo) ;
@@ -144,4 +161,4 @@ exports.Steps.prototype.do = function()
 	}
 
 	return this ;
-} 
+}

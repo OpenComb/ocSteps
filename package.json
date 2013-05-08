@@ -8,5 +8,9 @@
   },
   "repository": "",
   "author": "alee chou",
-  "license": "MIT"
+  "license": "MIT",
+	"devDependencies": {
+		"should": "*",
+		"mocha": "*"
+	}
 }

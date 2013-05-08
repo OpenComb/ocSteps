@@ -32,7 +32,14 @@ ___增强了：___
 ## 安装
 
 ```
-npm i ocsteps
+$ npm i ocsteps
+```
+
+## 测试
+
+```
+$ npm i -d
+$ make test
 ```
 
 
@@ -439,6 +446,53 @@ steps(
 * step函数执行堆栈上未处理的异常
 
 
+## silence
+
+ocSteps 会在遇到错误时自动将错误打印到控制台，以免在调试时漏过错误。用 `silence` 属性可以关闭。
+
+
+```javascript
+var steps = require("ocsteps") ;
+
+steps(
+
+	function(){
+		throw {error:"some error occured"} ;
+	}
+
+).on("done",function(lastError){
+	// 将所有错误打印出来
+	for( var error=lastError; error; error=error.prev )
+	{
+		console.log(lastError) ;
+	}
+}).silence = true ;  // silence=true 禁止自动打印错误
+```
+
+也可以在 step函数里设置：
+
+```javascript
+var steps = require("ocsteps") ;
+
+steps(
+
+	function(){
+	
+		// silence=true 禁止自动打印错误
+		this.silence = true ;
+		
+		throw {error:"some error occured"} ;
+	}
+
+).on("done",function(lastError){
+	// 将所有错误打印出来
+	for( var error=lastError; error; error=error.prev )
+	{
+		console.log(lastError) ;
+	}
+})
+```
+
 
 
 ## 尚未实现
@@ -460,8 +514,7 @@ steps(
 
 (The MIT License)
 
-Copyright (c) 2010-2011 TJ Holowaychuk &lt;tj@vision-media.ca&gt;
-Copyright (c) 2011 Aseem Kishore &lt;aseem.kishore@gmail.com&gt;
+Copyright (c) 2013 Alee Chou &lt;aleechou@gmail.com&gt;
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
