@@ -6,26 +6,25 @@ Step, Sync 等库对静态的任务链结构支持得非常好，尤其是 Step 
 
 ___简化了：___
 
-	* 取消了 group(),parallel()，仅使用用 this.fork() 来处理异步情况
+* 取消了 group(),parallel()，仅使用用 this.fork() 来处理异步情况
 
-	* 不通过判断step函数的返回值来决定是否立即执行下一个step函数，只要调用过 this.fork() 任务链就会等待回调
+* 不通过判断step函数的返回值来决定是否立即执行下一个step函数，只要调用过 this.fork() 任务链就会等待回调
 
 
 
 ___增强了：___
 
+* 可以在任务执行过程中插入step
 
-	* 可以在任务执行过程中插入step
+* 可以为step预设参数，这对循环非常有用
 
-	* 可以为step预设参数，这对循环非常有用
+* 自动搜集错误，并且用 prev 属性将所有错误串联起来
 
-	* 自动搜集错误，并且用 prev 属性将所有错误串联起来
+* 任务链的终止操作：this.terminate()
 
-	* 任务链的终止操作：this.terminate()
+* 事件：done
 
-	* 事件：done
-
-	* 支持并入另外一个任务链作为一个step
+* 支持并入另外一个任务链作为一个step
 
 
 ## 安装
@@ -37,8 +36,7 @@ npm i ocsteps
 
 ## 简单的例子
 
-javascript
-```
+```javascript
 var steps = require("ocsteps") ;
 
 // 和 Step 的用法很像
@@ -74,8 +72,7 @@ step 3
 在一个step函数中，用 `this.fork()` 作为异步操作的回调函数，任务链会一直等待这个step函数里所有的异步操作回调后，继续下一个step。
 最后一次回调传入的参数，会作为下一个 step 函数的参数；
 
-javascript
-```
+```javascript
 var steps = require("ocsteps") ;
 
 steps(
@@ -97,8 +94,7 @@ steps(
 两次打印的时间会相差 3秒，因为最长一次 setTimeout() 是3秒 。
 
 
-javascript
-```
+```javascript
 var steps = require("ocsteps") ;
 var fs = require("fs") ;
 
@@ -120,8 +116,7 @@ steps(
 可以在一个 step 函数中，通过 `this.step()` 和 `this.appendStep()` 动态地向任务链添加 step函数。效果分别是：插入到当前执行位置，和添加到任务链的最后。
 
 
-javascript
-```
+```javascript
 var steps = require("ocsteps") ;
 
 steps(
@@ -158,8 +153,7 @@ c
 
 但是，对 `this.step()` 来说，一个一个传入 step函数，和一次传入多个 step函数，添加到任务链上的顺序是不同的：
 
-javascript
-```
+```javascript
 var steps = require("ocsteps") ;
 
 steps(
@@ -223,8 +217,7 @@ insert step function one by one:
 
 ## 预置参数
 
-javascript
-```
+```javascript
 var steps = require("ocsteps") ;
 
 steps(
@@ -249,8 +242,7 @@ steps(
 
 这个机制主要应用于循环当中：
 
-javascript
-```
+```javascript
 var steps = require("ocsteps") ;
 
 steps(
@@ -330,8 +322,7 @@ Another way:
 `this.terminate()` 能够立即终止整个任务链的执行，包括当前 step函数。通过 `this.terminate()` 终止的任务链，仍然会触发`done`事件。
 
 
-javascript
-```
+```javascript
 var steps = require("ocsteps") ;
 
 steps(
@@ -355,8 +346,7 @@ steps(
 
 ocSteps 是一个 nodejs EventEmitter 对象，支持事件：done
 
-javascript
-```
+```javascript
 var steps = require("ocsteps") ;
 
 steps(
@@ -398,8 +388,7 @@ over .
 ocSteps 会自动搜集任务链执行过程中遇到的错误和异常对象，并将这些对象通过 `prev` 属性串联成一个错误链，将最后一个错误作为`done`事件的参数。
 
 
-javascript
-```
+```javascript
 var steps = require("ocsteps") ;
 
 steps(
