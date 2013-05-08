@@ -78,7 +78,7 @@ step 3
 
 ## 异步操作：this.fork()
 
-在一个step函数中，用 `this.fork()` 作为异步操作的回调函数，任务链会一直等待这个step函数里所有的异步操作回调后，继续下一个step。
+在一个step函数中，用 `this.fork()` 作为异步操作的回调函数，任务链会一直等待直到所有的`this.fork()`被回调后，继续下一个step。
 最后一次回调传入的参数，会作为下一个 step 函数的参数；
 
 ```javascript
@@ -134,10 +134,12 @@ steps(
 
 		console.log("a") ;
 
+		// 插入 step函数
 		this.step(function(){
 			console.log("b") ;
 		}) ;
 
+		// 将 step函数 添加到任务链的末尾
 		this.appendStep(function(){
 			console.log("c") ;
 		}) ;
@@ -150,7 +152,7 @@ steps(
 ) ;
 ```
 
-打印出来的是：
+打印出来的是（d在c的前面）：
 ```
 a
 b
