@@ -162,16 +162,16 @@ Steps(
 	// 检查文件是否存在
 	function(){
 		fs.exists("/some/folder/a.txt",this.hold('existsA')) ;
-		fs.exists("/some/folder/b.txt",this.hold('existB')) ;
+		fs.exists("/some/folder/b.txt",this.hold('existsB')) ;
 		fs.exists("/some/folder/c.txt",this.hold()) ;
 	}
 
 	// 读取文件
-	, function(existC){
+	, function(existsC){
 	
 		this.recv.existsA && fs.readFile("/some/folder/a.txt",this.hold('errA','buffA')) ;
 		this.recv.existsB && fs.readFile("/some/folder/b.txt",this.hold('errB','buffB')) ;
-		existC && fs.readFile("/some/folder/c.txt",this.hold()) ;
+		existsC && fs.readFile("/some/folder/c.txt",this.hold()) ;
 			
 	}
 
