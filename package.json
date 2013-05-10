@@ -1,12 +1,12 @@
 {
   "name": "ocsteps",
-  "version": "0.1.0",
-  "description": "a async lib",
+  "version": "0.1.1",
+  "description": "ocSteps 是一个JavaScript异步执行辅助工具，主要用于支持 Node.js 中的大量异步API以及操作，以及前端浏览器里的异步任务（例如Ajax）。",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "make"
   },
-  "repository": "",
+  "repository": "git@github.com:OpenComb/ocSteps.git",
   "author": "alee chou",
   "license": "MIT",
 	"devDependencies": {

@@ -1,164 +1,270 @@
-var events = require("events") ;
+(function(){
 
-
-exports = module.exports = function()
-{
-	var steps = new exports.Steps ;
-	return steps.step.apply(steps,arguments)._next() ;
-}
-
-
-exports.Steps = function()
-{
-	this._steps = [] ;
-	this._stepReturn = undefined ;
-	this._hold = 0 ;
-	this.error = undefined ;
-	this._bindo = this.do.bind(this) ;
-	this.silence = false ;
-
-	events.EventEmitter.apply(this) ;
-} ;
-
-exports.Steps.prototype = new events.EventEmitter ;
-
-exports.Steps.prototype.step = function()
-{
-	for(var i=arguments.length-1;i>=0;i--)
+	var Steps = function()
 	{
-		this._steps.unshift(arguments[i]) ;
-	}
-	return this ;
-}
-exports.Steps.prototype.appendStep = function()
-{
-	for(var i=0;i<arguments.length;i++)
-	{
-		this._steps.push(arguments[i]) ;
-	}
-	return this ;
-}
+		this._steps = [] ;
+		this._pauseCounter = 0 ;
+		this._trylevel = 0 ;
+		this.uncatchException = undefined ;
+		this._bindo = this.do.bind(this) ;
+		this._insertPos = 0 ;
 
-exports.Steps.prototype.fork = function(dontAutoCollectErr)
-{
-	this.hold() ;
-	return (function(){
-		this.setStepReturn(arguments,dontAutoCollectErr) ;
-		this.release() ;
-	}).bind(this) ;
-}
+		this.prevReturn = undefined ;
+		this._lastHoldRecv = undefined ;
+		this.recv = [] ;
 
-exports.Steps.prototype.hold = function()
-{
-	this._hold ++ ;
-	return this ;
-}
-exports.Steps.prototype.release = function()
-{
-	this._hold -- ;
-	return this._next() ;
-}
-
-exports.Steps.prototype.setError = function(err)
-{
-	if( !this.silence )
-	{
-		console.log(err) ;
-		err.stack && console.log(err.stack) ;
-	}
-
-	err.prev = this.error ;
-	this.error = err ;
-	return this ;
-}
-
-exports.Steps.prototype.setStepReturn = function(stepReturn,dontAutoCollectErr)
-{
-	if(!dontAutoCollectErr)
-	{
-		if( stepReturn&&stepReturn.constructor===Error )
-		{
-			this.setError(stepReturn) ;
+		this._events = {
+			'uncatch': []
+			, 'done': []
 		}
-		else if( stepReturn && stepReturn[0] && stepReturn[0].constructor===Error )
-		{
-			this.setError(stepReturn[0]) ;
-		}
-	}
-	this._stepReturn = stepReturn ;
-	return this ;
-}
 
-exports.Steps.prototype.getStepReturnAsArgs = function()
-{
-	return (this._stepReturn===undefined||this._stepReturn.callee)?
-			this._stepReturn:
-			[this._stepReturn] ;
-}
-
-exports.Steps.prototype.terminate = function()
-{
-	throw {signal:'terminate'} ;
-}
-
-exports.Steps.prototype.do = function()
-{
-	if(this._hold)
+	} ;
+	Steps.prototype.on = function(eventName,func)
 	{
+		this._events[eventName] && this._events[eventName].push(func) ;
 		return this ;
 	}
-
-	if(!this._steps.length)
+	Steps.prototype.emit = function(eventName)
 	{
-		this.emit("done",this.error) ;
+		var args = [] ;
+		for( var i=1;i<arguments.length;i++ )
+		{
+			args.push(arguments[i]) ;
+		}
+		if( this._events[eventName] && this._events[eventName].length )
+		{
+			for(var handle;handle=this._events[eventName].shift();)
+			{
+				handle.apply(this,args) ;
+			}
+		}
+		return this ;
+	}
+	Steps.prototype.bind = function(object)
+	{
+		this.__proto__ = object ;
 		return this ;
 	}
 	
-	var func = this._steps.shift() ;
-
-	try{
+	Steps.prototype._buildStep = function(func)
+	{
+		var step =  {
+			func: func
+			, presetArgs: undefined
+			, trylevel: this._trylevel
+		} ;
 		if(func.constructor===Array)
 		{
-			this.setStepReturn( func[0].apply(this,func[1]) ) ;
+			step.presetArgs = func[1] ;
+			step.func = func[0]
 		}
-		else
+		return step ;
+	}
+	Steps.prototype.try = function()
+	{
+		this._trylevel ++ ;
+		this.step.apply(this,arguments) ;
+		return this ;
+	}
+	Steps.prototype.catch = function(body,final)
+	{
+		var stepBody = this._buildStep(body) ;
+		stepBody.isCatchBody = true ;
+		stepBody.finalBody = final ;
+
+		this._steps.splice(this._insertPos++,0,stepBody) ;
+
+		this._trylevel -- ;
+		return this ;
+	}
+	Steps.prototype._step = function()
+	{
+		var newsteps = [this._insertPos,0] ;
+		this._insertPos+= arguments.length ;
+		
+		for(var i=0;i<arguments.length;i++)
 		{
-			this.setStepReturn(
-				func.apply( this, this.getStepReturnAsArgs() )
-			) ;
+			newsteps.push( this._buildStep(arguments[i]) ) ;
 		}
-	}catch(err){
-		if(err.signal&&err.signal=='terminate')
+		this._steps.splice.apply(this._steps,newsteps) ;
+
+		newsteps.splice(0,2) ;
+		return newsteps ;
+	}
+	Steps.prototype.step = function()
+	{
+		this._step.apply(this,arguments) ;
+		return this ;
+	}
+	Steps.prototype.appendStep = function()
+	{
+		for(var i=0;i<arguments.length;i++)
 		{
-			// clear steps queue
-			this._steps = [] ;
+			this._steps.push(this._buildStep(arguments[i])) ;
 		}
-		else
+		return this ;
+	}
+	Steps.prototype.hold = function()
+	{
+		var newsteps=[], names=[] ;
+		for(var i=0;i<arguments.length;i++)
 		{
-			// as step function's return
-			this.setError(err) ;
-			this.setStepReturn(err,true) ;
+			((typeof arguments[i]=='function'||(arguments[i]&&arguments[i].constructor===Array))? newsteps: names) .push(arguments[i]) ;
 		}
+		var newsteps = this._step.apply(this,newsteps) ;
+
+		var holdIndex = this._lastHoldIndex = this._pauseCounter ++ ;
+		
+		var callbacked = false ;
+
+		return (function(){
+			// 只调用一次有效
+			if(callbacked) return ;
+			callbacked = true ;
+
+			this.recv[holdIndex] = arguments ;
+			
+			for(var i=0;i<names.length;i++)
+			{
+				names[i] && (this.recv[names[i].toString()] = arguments[i]) ;
+			}
+			
+			for(var i=0;i<newsteps.length;newsteps++)
+			{
+				newsteps[i].presetArgs = arguments ;
+			}
+			
+			// 最后一次 hold() 被 release
+			if(this._lastHoldIndex==holdIndex)
+			{
+				this._lastHoldRecv = arguments ;
+			}
+
+			(--this._pauseCounter)<1 && this._doOnNextTick() ;
+
+		}).bind(this) ;
+	}
+	Steps.prototype.terminate = function()
+	{
+		throw {signal:'terminate'} ;
 	}
 	
-	return this._next() ;
-}
-
-exports.Steps.prototype._next = function()
-{
-	if( this._hold )
+	Steps.prototype.do = function()
 	{
-		return ;
+		if(this._pauseCounter) return this ;
+
+		// 整个任务链结束
+		if(!this._steps.length)
+		{
+			if( this.uncatchException )
+			{
+				if( this._events['uncatch'].length )
+				{
+					this.emit("uncatch",this.uncatchException) ;
+				}
+				else
+				{
+					throw this.uncatchException ;
+				}
+			}
+
+			//
+			this.emit("done",this.prevReturn) ;
+
+			// 停止
+			return this ;
+		}
+
+		var step = this._steps.shift() ;
+
+		// 重置状态
+		this._insertPos = 0 ;
+		this._trylevel = step.trylevel ;
+
+		try{
+			if( step.isCatchBody )
+			{
+				if(step.finalBody)
+				{
+					step.finalBody.call( this ) ;
+				}
+
+				if(this.uncatchException)
+				{
+					var uncatchException = this.uncatchException ;
+					this.uncatchException = undefined ;
+	
+					step.func.call( this, uncatchException ) ;
+				}
+			}
+			else
+			{			
+				this.prevReturn = step.func.apply( this, step.presetArgs || this._lastHoldRecv || [this.prevReturn] ) ;
+			}
+		}catch(err){
+
+			this.prevReturn = undefined ;
+
+			if(err.signal&&err.signal=='terminate')
+			{
+				// 跳过所有同分支的 step
+				while( this._steps.length && this._steps[0].branchlevel>=step.branchlevel )
+				{
+					this._steps.shift() ;
+				}
+			}
+			else
+			{
+				this.uncatchException = err ;
+
+				// 跳过同 trylevel 下的后续 step
+				while( this._steps.length )
+				{
+					if( this._steps[0].isCatchBody && this._steps[0].trylevel<=step.trylevel )
+					{
+						break ;
+					}
+
+					this._steps.shift() ;
+				}
+			}
+		}
+
+		// 清空，等待异步操作回调时填充
+		this.recv = [] ;
+		this._lastHoldRecv = undefined ;
+
+		return this._doOnNextTick() ;
 	}
 
-	if( process&&process.nextTick )
+	Steps.prototype._doOnNextTick = function()
 	{
-		process.nextTick(this._bindo) ;
-	}
-	else
-	{
-		setTimeout(this._bindo,0) ;
+		if( this._pauseCounter ) return ;
+
+		process&&process.nextTick?
+			process.nextTick(this._bindo) :
+			setTimeout(this._bindo,0) ;
+
+		return this ;
 	}
 
-	return this ;
-}
+	function steps()
+	{
+		var steps = new Steps ;
+		return steps.step.apply(steps,arguments)._doOnNextTick() ;
+	}
+
+	// node.js
+	if(typeof module!='undefined' && typeof exports!='undefined' && module.exports)
+	{
+		module.exports = steps ;
+		module.exports.Steps = Steps ;
+	}
+
+	// browser
+	else if(typeof window!='undefined')
+	{
+		return window.Steps = steps ;
+	}
+
+}) () ;

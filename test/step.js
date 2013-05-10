@@ -4,34 +4,33 @@ describe("ocSteps",function(){
 
 	describe("#step()",function(){
 		it("using this.step() one by one",function(done){
-	
-			var arr = [] ;
-	
+
+			var flag = 0 ;
+
 			steps(
 	
 				function(){
-					arr.push(1) ;
+					(flag++).should.be.eql(0) ;
 				}
 	
 				, function(i){
 					this.step(function(){
-						arr.push(2) ;
+						(flag++).should.be.eql(1) ;
 					}) ;
 					this.step(function(){
-						arr.push(3) ;
+						(flag++).should.be.eql(2) ;
 					}) ;
 					this.step(function(){
-						arr.push(4) ;
+						(flag++).should.be.eql(3) ;
 					}) ;
 				}
 	
 				, function(i){
-					arr.push(5) ;
+					(flag++).should.be.eql(4) ;
 				}
 				
 			).on("done",function(){
-				arr.should.have.length(5) ;
-				arr.should.eql([1,4,3,2,5]) ;
+				(flag++).should.be.eql(5) ;
 				done() ;
 			}) ;
 		})
@@ -39,36 +38,56 @@ describe("ocSteps",function(){
 		
 		
 		it("passing step functions call this.step() one time",function(done){
-	
-			var arr = [] ;
+
+			var flag = 0 ;
 	
 			steps(
 	
 				function(){
-					arr.push(1) ;
+					(flag++).should.be.eql(0) ;
+					return flag ;
 				}
 	
-				, function(i){
+				, function(data){
+				
+					data.should.be.eql(1) ;
+					this.prevReturn.should.be.eql(1) ;
+					(flag++).should.be.eql(1) ;
+							
 					this.step(
-						function(){
-							arr.push(2) ;
+						function(data){
+							data.should.be.eql(2) ;
+							this.prevReturn.should.be.eql(2) ;
+							(flag++).should.be.eql(2) ;
+							return flag
 						}
-						, function(){
-							arr.push(3) ;
+						, function(data){
+							data.should.be.eql(3) ;
+							this.prevReturn.should.be.eql(3) ;
+							(flag++).should.be.eql(3) ;
+							return flag
 						}
-						, function(){
-							arr.push(4) ;
+						, function(data){
+							data.should.be.eql(4) ;
+							this.prevReturn.should.be.eql(4) ;
+							(flag++).should.be.eql(4) ;
+							return flag
 						}
 					) ;
+					
+					
+					return flag
 				}
 	
-				, function(i){
-					arr.push(5) ;
+				, function(data){
+					data.should.be.eql(5) ;
+					this.prevReturn.should.be.eql(5) ;
+					(flag++).should.be.eql(5) ;
+					return flag
 				}
 				
 			).on("done",function(){
-				arr.should.have.length(5) ;
-				arr.should.eql([1,2,3,4,5]) ;
+				(flag++).should.be.eql(6) ;
 				done() ;
 			}) ;
 		})
@@ -81,33 +100,32 @@ describe("ocSteps",function(){
 	describe("#appendStep()",function(){
 		it("using this.appendStep() one by one",function(done){
 	
-			var arr = [] ;
+			var flag = 0 ;
 	
 			steps(
 	
 				function(){
-					arr.push(1) ;
+					(flag++).should.be.eql(0) ;
 				}
 	
 				, function(i){
 					this.appendStep(function(){
-						arr.push(2) ;
+						(flag++).should.be.eql(2) ;
 					}) ;
 					this.appendStep(function(){
-						arr.push(3) ;
+						(flag++).should.be.eql(3) ;
 					}) ;
 					this.appendStep(function(){
-						arr.push(4) ;
+						(flag++).should.be.eql(4) ;
 					}) ;
 				}
 	
 				, function(i){
-					arr.push(5) ;
+					(flag++).should.be.eql(1) ;
 				}
 				
 			).on("done",function(){
-				arr.should.have.length(5) ;
-				arr.should.eql([1,5,2,3,4]) ;
+					(flag++).should.be.eql(5) ;
 				done() ;
 			}) ;
 		})
@@ -116,35 +134,34 @@ describe("ocSteps",function(){
 		
 		it("passing step functions call this.appendStep() one time",function(done){
 	
-			var arr = [] ;
+			var flag = 0 ;
 	
 			steps(
 	
 				function(){
-					arr.push(1) ;
+					(flag++).should.be.eql(0) ;
 				}
 	
 				, function(i){
 					this.appendStep(
 						function(){
-							arr.push(2) ;
+							(flag++).should.be.eql(2) ;
 						}
 						, function(){
-							arr.push(3) ;
+							(flag++).should.be.eql(3) ;
 						}
 						, function(){
-							arr.push(4) ;
+							(flag++).should.be.eql(4) ;
 						}
 					) ;
 				}
 	
 				, function(i){
-					arr.push(5) ;
+					(flag++).should.be.eql(1) ;
 				}
 				
 			).on("done",function(){
-				arr.should.have.length(5) ;
-				arr.should.eql([1,5,2,3,4]) ;
+				(flag++).should.be.eql(5) ;
 				done() ;
 			}) ;
 		})
