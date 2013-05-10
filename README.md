@@ -150,7 +150,17 @@ stepA() -> hold() 1 pause! -> 1000ms -> release() 2
 ```
 
 
-这是一个文件操作的例子：
+### recv 和 prevReturn
+
+所有 hold() 在 release 时 接收到的参数，都会保存在 recv 属性中。它是一个二维数组，第一维下标表示对应第几次 hold() ，第二维下标表示第几个参数。
+
+用数字下标到 recv 里取数据，不是一个很好的方式，这给程序加入了“神秘数字”的“坏味道”，更好的方法是：
+
+```
+hold(argName1,argName2,argName3 ...) ;
+```
+
+这是一个文件操作的例子
 
 ```javascript
 var Steps = require("ocsteps") ;
@@ -169,10 +179,14 @@ Steps(
 	// 读取文件
 	, function(existsC){
 	
-		this.recv.existsA && fs.readFile("/some/folder/a.txt",this.hold('errA','buffA')) ;
-		this.recv.existsB && fs.readFile("/some/folder/b.txt",this.hold('errB','buffB')) ;
-		existsC && fs.readFile("/some/folder/c.txt",this.hold()) ;
-			
+		this.recv.existsA
+			&& fs.readFile("/some/folder/a.txt",this.hold('errA','buffA')) ;
+		
+		this.recv.existsA
+			&& fs.readFile("/some/folder/a.txt",this.hold('errA','buffA')) ;
+		
+		existsC
+			&& fs.readFile("/some/folder/c.txt",this.hold()) ;
 	}
 
 	// 输出文件
@@ -184,29 +198,20 @@ Steps(
 			throw new Error( this.recv.errA||this.recv.errB||this.recv.errC ) ;
 		}
 	
-		if(this.recv.buffA)
-			console.log( this.recv.buffA.toString() ) ;
+		this.recv.buffA
+			&& console.log( this.recv.buffA.toString() ) ;
 			
-		if(this.recv.buffB)
-			console.log( this.recv.buffB.toString() ) ;
+		this.recv.buffB
+			&& console.log( this.recv.buffB.toString() ) ;
 			
-		if(buffC)
-			console.log( buffC.toString() ) ;
+		buffC
+			&& console.log( buffC.toString() ) ;
 	}
 	
 ) ;
 ```
 
 
-### recv 和 prevReturn
-
-所有 hold() 在 release 时 接收到的参数，都会保存在 recv 属性中。它是一个二维数组，第一维下标表示对应第几次 hold() ，第二维下标表示第几个参数。
-
-用数字下标到 recv 里取数据，不是一个很好的方式，这给程序加入了“神秘数字”的“坏味道”，更好的方法是：
-
-```
-hold(argName1,argName2,argName3 ...) ;
-```
 
 如果不需要中间的某个参数，可以用 `null` 占位：
 
