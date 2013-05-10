@@ -57,14 +57,7 @@ Steps(
 	}
 
 	, function step2(i){
-		console.log(i,arguments.callee.name) ;
-		
-		// 在当前位置，动态地插入一个 step
-		this.step(function step4(i){
-			console.log(i,"dync ",arguments.callee.name) ;
-			return ++ i
-		}) ;
-		
+		console.log(i,arguments.callee.name) ;		
 		return ++i ;
 	}
 
@@ -81,8 +74,7 @@ Steps(
 ```
 1 step1
 2 step2
-3 dync step4
-4 step3
+3 step3
 ```
 
 请留意一下这4个函数的执行顺序：由 step2 动态插入的函数 step4 是在 step2 和 step3 之间执行的。
