@@ -9,19 +9,19 @@ __ocSteps__ 维护一个动态的任务链，任务链上的每个节点都是�
 __ocSteps__ 参考了 [Step](https://github.com/creationix/step) 的设计，但是规则还要更简单（ocSteps包括注释和疏散的空行在内也只有200+行代码）；并且 ocSteps 是为复杂、动态的任务链而设计。
 
 
-___ocSteps的主要特性如下：___
-
-* 在执行一个 step 时向任务链动态地添加新的 step：step(), appendStep()
-
-* 在执行一个 step 时进行 hold() 操作，任务链暂停，直到对应的异步操作完成时 release ，当所有 hold() 都被 release 后，任务链继续
-
-* 异常处理：ocSteps 的任务链上抛出的异常时，执行会跳出相应的step区段，直到被catch，或者任务链结束触发'uncatch'事件。
-
-* 终止任务链：terminate()
-
-* 事件：done, uncatch
-
-* [计划] 分支：fork() 
+* [快速开始] (#快速开始)
+* [动态任务链] (#动态任务链)
+* [异步操作] (#异步操作)
+	* [并发任务] (#并发任务)
+	* [recv] (#recv)
+* [绑定参数] (#绑定参数)
+* [终止任务] (#终止任务)
+* [异常处理] (#异常处理)
+* [事件] (#事件)
+	* [done] (#事件：done)
+	* [uncatch] (#事件：uncatch)
+* [绑定对象] (#绑定对象)
+* [在浏览器中使用] (#在浏览器中使用)
 
 
 
@@ -41,7 +41,7 @@ $ make test
 ```
 
 
-## 简单的例子
+## 快速开始
 
 ```javascript
 var Steps = require("ocsteps") ;
@@ -87,7 +87,7 @@ Steps(
 
 请留意一下这4个函数的执行顺序：由 step2 动态插入的函数 step4 是在 step2 和 step3 之间执行的。
 
-## 动态任务链：this.step() 和 this.appendStep()
+## 动态任务链
 
 `step()` 和 `appendStep()` 方法用于向任务链动态地添加 step函数。效果分别是：插入到当前执行位置，和添加到任务链的最后。
 
@@ -211,7 +211,7 @@ insert step function one by one:
 
 
 
-## 异步操作：hold()
+## 异步操作
 
 调用 `hold()` 会让任务链的执行暂停，并且返回一个 release函数，直到这个release函数被调用后，任务链才继续执行。
 
@@ -242,8 +242,8 @@ Steps(
 ) ;
 ```
 
+### 并发任务
 
-### 暂停计数器
 
 可以连续调用多次 `hold()` ，每调用一次 `hold()` 任务链的暂停计数器 +1，并返回一个 release 函数，暂停计数器>0 时任务链暂停；
 每个 release 函数被回调时，暂停计数器 -1，当 暂停计数器<1 时，任务链恢复执行。
@@ -475,7 +475,7 @@ hello!
 `prevReturn` 和 `recv`作用类似，它提供的是前一个 step function 的返回值。
 
 
-## 预置参数
+## 绑定参数
 
 ```javascript
 var steps = require("ocsteps") ;
@@ -584,9 +584,9 @@ Better way: the value of variable i in each loop has saved, and then pass to ste
 
 
 
-## 终止任务链：this.terminate()
+## 终止任务链
 
-`this.terminate()` 能够立即终止整个任务链的执行，包括当前 step函数。通过 `this.terminate()` 终止的任务链，仍然会触发`done`事件。
+`terminate()` 能够立即终止整个任务链的执行，包括当前 step函数。通过 `this.terminate()` 终止的任务链，仍然会触发`done`事件。
 
 
 ```javascript
@@ -742,40 +742,6 @@ steps(
 }) ;
 ```
 
-## 错误和异常处理
-
-ocSteps 会自动搜集任务链执行过程中遇到的错误和异常对象，并将这些对象通过 `prev` 属性串联成一个错误链，将最后一个错误作为`done`事件的参数。
-
-
-```javascript
-var steps = require("ocsteps") ;
-
-steps(
-
-	function(){
-		fs.readFile(this.hold('error','buff')) ;
-	}
-	
-	, function(){
-		if( this.recv.error )
-		{
-			throw new Error(this.recv.error) ;
-		}
-		
-		console.log(this.recv.buff.toString()) ;
-	}
-	
-	, function(){
-	
-		// other works
-		// ... ...
-	
-	}
-
-).on("catch",function(error){
-	console.log(error) ;
-})
-```
 
 ## 绑定对象
 
@@ -812,7 +778,7 @@ Steps(
 `bind()`是一个为框架作者提供的方法，他们可以将 ocSteps 整合到他们的框架中。例如将任务链绑定给控制器，就得到了一个支持异步操作的控制器，那些 step function 实际上就成了控制器的方法。
 
 
-## 在浏览器中使用 ocSteps
+## 在浏览器中使用
 
 ```html
 
