@@ -1,5 +1,4 @@
 (function(){
-
 	var Steps = function()
 	{
 		this._steps = [] ;
@@ -8,18 +7,12 @@
 		this.uncatchException = undefined ;
 		this._bindo = this.do.bind(this) ;
 		this._insertPos = 0 ;
-
 		this.prevReturn = undefined ;
 		this._lastHoldRecv = undefined ;
 		this.recv = [] ;
-
-		this._events = {
-			'uncatch': []
-			, 'done': []
-		}
-
+		this._events = { 'uncatch': [], 'done': [] }
 	} ;
-	Steps.prototype.on = function(eventName,func)
+	Steps.prototype.on = Steps.prototype.once = function(eventName,func)
 	{
 		this._events[eventName] && this._events[eventName].push(func) ;
 		return this ;
@@ -27,24 +20,12 @@
 	Steps.prototype.emit = function(eventName)
 	{
 		var args = [] ;
-		for( var i=1;i<arguments.length;i++ )
-		{
-			args.push(arguments[i]) ;
-		}
+		for( var i=1;i<arguments.length;i++ ) args.push(arguments[i]) ;
 		if( this._events[eventName] && this._events[eventName].length )
-		{
-			for(var handle;handle=this._events[eventName].shift();)
-			{
-				handle.apply(this,args) ;
-			}
-		}
+			for(var handle;handle=this._events[eventName].shift();) handle.apply(this,args) ;
 		return this ;
 	}
-	Steps.prototype.bind = function(object)
-	{
-		this.__proto__ = object ;
-		return this ;
-	}
+	Steps.prototype.bind = function(object){ this.__proto__ = object ; return this ; }
 	
 	Steps.prototype._buildStep = function(func)
 	{
@@ -144,11 +125,8 @@
 
 		}).bind(this) ;
 	}
-	Steps.prototype.terminate = function()
-	{
-		throw {signal:'terminate'} ;
-	}
-	
+	Steps.prototype.terminate = function(){ throw {signal:'terminate'} ; }
+	Steps.prototype._makesureStepArgs = function(presetArgs){ return presetArgs || this._lastHoldRecv || [this.prevReturn] ; }
 	Steps.prototype.do = function()
 	{
 		if(this._pauseCounter) return this ;
@@ -156,6 +134,7 @@
 		// 整个任务链结束
 		if(!this._steps.length)
 		{
+			// 处理 uncatch 异常
 			if( this.uncatchException )
 			{
 				if( this._events['uncatch'].length )
@@ -167,10 +146,8 @@
 					throw this.uncatchException ;
 				}
 			}
-
 			//
 			this.emit("done",this.prevReturn) ;
-
 			// 停止
 			return this ;
 		}
@@ -180,7 +157,6 @@
 		// 重置状态
 		this._insertPos = 0 ;
 		this._trylevel = step.trylevel ;
-
 		try{
 			if( step.isCatchBody )
 			{
@@ -199,7 +175,7 @@
 			}
 			else
 			{			
-				this.prevReturn = step.func.apply( this, step.presetArgs || this._lastHoldRecv || [this.prevReturn] ) ;
+				this.prevReturn = step.func.apply( this, this._makesureStepArgs(step.presetArgs) ) ;
 			}
 		}catch(err){
 
@@ -207,26 +183,12 @@
 
 			if(err.signal&&err.signal=='terminate')
 			{
-				// 跳过所有同分支的 step
-				while( this._steps.length && this._steps[0].branchlevel>=step.branchlevel )
-				{
-					this._steps.shift() ;
-				}
+				this._steps = [] ;
 			}
 			else
 			{
 				this.uncatchException = err ;
-
-				// 跳过同 trylevel 下的后续 step
-				while( this._steps.length )
-				{
-					if( this._steps[0].isCatchBody && this._steps[0].trylevel<=step.trylevel )
-					{
-						break ;
-					}
-
-					this._steps.shift() ;
-				}
+				this._skipUntilCatchBody(step.trylevel) ;	// this._trylevel 可能已经在 step 执行时被改变了，所以用 step.trylevel 比较
 			}
 		}
 
@@ -236,7 +198,6 @@
 
 		return this._doOnNextTick() ;
 	}
-
 	Steps.prototype._doOnNextTick = function()
 	{
 		if( this._pauseCounter ) return ;
@@ -247,24 +208,61 @@
 
 		return this ;
 	}
-
-	function steps()
+	Steps.prototype._skipUntilCatchBody = function(steplevel)
 	{
-		var steps = new Steps ;
-		return steps.step.apply(steps,arguments)._doOnNextTick() ;
+		// 跳过同 trylevel 下的后续 step
+		while( this._steps.length )
+		{
+			if( this._steps[0].isCatchBody && this._steps[0].trylevel<=steplevel )
+			{
+				break ;
+			}
+			this._steps.shift() ;
+		}
 	}
 
+	Steps.prototype.fork = function()
+	{
+		var fork=new Steps(), master=this ;
+		fork.step.apply(fork,arguments) ;
+
+		this.step(function(){
+			// 传递参数
+			fork._steps[0] && (!fork._steps[0].presetArgs) && (fork._steps[0].presetArgs=arguments) ;
+			var forkreturn ;
+			fork.appendStep( function(){
+				forkreturn = arguments ;
+			} ) ;
+			// 执行
+			var release = this.hold() ;
+			fork.once("done",function(){
+					release.apply(this,forkreturn) ;
+				})
+				.once("uncatch",function(error){
+					// 在 master 上继续抛出异常
+					master.uncatchException = error ;
+					master._skipUntilCatchBody(master._trylevel) ;
+				})
+				._doOnNextTick() ;
+		}) ;
+
+		return fork ;
+	}
+	
+	// 导出 ---
+	function steps(){
+		var steps=new Steps;
+		return steps.step.apply(steps,arguments)._doOnNextTick() ;
+	}
 	// node.js
 	if(typeof module!='undefined' && typeof exports!='undefined' && module.exports)
 	{
 		module.exports = steps ;
 		module.exports.Steps = Steps ;
 	}
-
 	// browser
 	else if(typeof window!='undefined')
 	{
 		return window.Steps = steps ;
 	}
-
 }) () ;

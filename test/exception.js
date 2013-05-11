@@ -1,4 +1,5 @@
 var Steps = require("../index.js") ;
+var should = require("should") ;
 
 describe("ocSteps",function(){
 

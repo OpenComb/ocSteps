@@ -24,8 +24,8 @@ __ocSteps__ 参考了 [Step](https://github.com/creationix/step) 的设计，但
 	* [uncatch] (#uncatch)
 * [绑定参数] (#-10)
 * [绑定对象] (#-11)
-* [在浏览器中使用] (#-12)
-
+* [分支] (#-12)
+* [在浏览器中使用] (#-13)
 
 
 
@@ -42,6 +42,10 @@ $ npm i ocsteps
 $ npm i -d
 $ make test
 ```
+
+## 升级日志
+
+[History.md] (History.md)
 
 
 ## 快速开始
@@ -696,6 +700,70 @@ Steps(
 
 
 `bind()`是一个为框架作者提供的方法，他们可以将 ocSteps 整合到他们的框架中。例如将任务链绑定给控制器，就得到了一个支持异步操作的控制器，那些 step function 实际上就成了控制器的方法。
+
+
+## 分支
+
+
+```javascript
+var Steps = require("ocsteps") ;
+
+
+Steps(
+
+	function(){
+		console.log("master step 1") ;
+		return 'a' ;
+	}
+
+	, function(arg){
+
+		console.log("master step 2, ","input:",arg) ;
+
+		// 创建一个分支
+		this.fork(
+			function(arg){
+				console.log("branch step 1, ","input: ",arg) ;
+				return 'c' ;
+			}
+
+			, function(arg){
+				console.log("branch step 2, ","input: ",arg) ;
+				return 'd' ;
+			}
+		) ;
+
+		return 'b'
+	}
+
+	, function(arg){
+		console.log("master step 3, ","input: ",arg) ;
+	}
+) ;
+```
+
+打印：
+```
+master step 1
+master step 2, input: a
+branch step 1, input: b
+branch step 2, input: c
+master step 3, input: d
+```
+
+* 分支和主干会自动衔接上的
+
+* 执行分支时，主干暂停，分支执行完毕后，接着执行主干
+
+* 主干能够 catch 分支抛出的异常
+
+* 分支和主干之间，事件是独立的
+
+* 对分支调用 terminate() 不会影响主干
+
+* 分支和主干可以绑定不同的对象
+
+* `fork()` 和 绑定对象，可以使 ocSteps 更好地集成到框架里
 
 
 ## 在浏览器中使用
