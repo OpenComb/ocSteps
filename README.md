@@ -601,13 +601,10 @@ Steps(
 		return "foo" ;
 	} ,
 
-	[
-		function(arg){
-			console.log( this.prevStep.return ) ;
-			console.log( arg ) ;
-		}
-		, ["bar"]
-	]
+	["bar"], function(arg){
+		console.log( this.prevStep.return ) ;
+		console.log( arg ) ;
+	}
 
 ) () ;
 ```
@@ -618,9 +615,9 @@ foo
 bar
 ```
 
-这个程序会打印预先设定的参数 `bar` 而不是从前一个 step函数传来的 `foo` 。
+这个程序会打印预先传入的参数 `bar` 而不是从前一个 step函数传来的 `foo` 。
 
-向任务链插入step时，可以提供一个数组，第一个元素是step function，第二个元素是传给 step function 的参数列表(数组类型)。
+`step()` 除了接收 function 类型参数，还可以接收 Array 类型。Array参数会和后一个 function 绑定，作为 function 执行时的参数列表。	
 
 这个机制主要应用于循环当中：
 
@@ -629,6 +626,7 @@ var Steps = require("ocsteps") ;
 
 Steps(
 
+	// 有问题的方式
 	function(){
 
 		console.log("Always prints the last time value of the variable i in the for loop: ") ;
@@ -641,6 +639,7 @@ Steps(
 		}
 	}
 
+	// 常用的方式
 	, function(){
 
 		console.log("Another way: ") ;
@@ -657,17 +656,16 @@ Steps(
         }
     }
 
+    // 更好的方式
 	, function(){
 
 		console.log("Better way: the value of variable i in each loop has saved, and then pass to step functions: ") ;
 
         for(var i=1;i<=3;i++)
         {
-            this.step([
-	            function(arg){
-	                console.log(arg) ;
-	            }, [ i ]
-            ]) ;
+            this.step([i], function(arg){
+                console.log(arg) ;
+            }) ;
         }
     }
 

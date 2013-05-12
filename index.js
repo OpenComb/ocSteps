@@ -26,93 +26,70 @@
 		return this ;
 	}
 	Steps.prototype.bind = function(object){ this.__proto__ = object ; return this ; }
-	
-	Steps.prototype._buildStep = function(func)
-	{
-		var step =  {
-			func: func
-			, presetArgs: undefined
-			, trylevel: this._trylevel
-		} ;
-		if(func.constructor===Array)
-		{
-			step.presetArgs = func[1] ;
-			step.func = func[0]
-		}
-		return step ;
-	}
+
 	Steps.prototype.try = function()
 	{
 		this._trylevel ++ ;
-		this.step.apply(this,arguments) ;
-		return this ;
+		return this.step.apply(this,arguments) ;
 	}
 	Steps.prototype.catch = function(body,final)
 	{
-		var stepBody = this._buildStep(body) ;
-		stepBody.isCatchBody = true ;
-		stepBody.finalBody = final ;
-
-		this._steps.splice(this._insertPos++,0,stepBody) ;
-
-		this._trylevel -- ;
+		this._steps.splice(this._insertPos++,0,{
+			func: body
+			, finalBody: final
+			, isCatchBody: true
+			, trylevel: this._trylevel --
+		}) ;
 		return this ;
-	}
-	Steps.prototype._step = function()
-	{
-		var newsteps = [this._insertPos,0] ;
-		this._insertPos+= arguments.length ;
-		
-		for(var i=0;i<arguments.length;i++)
-		{
-			newsteps.push( this._buildStep(arguments[i]) ) ;
-		}
-		this._steps.splice.apply(this._steps,newsteps) ;
-
-		newsteps.splice(0,2) ;
-		return newsteps ;
 	}
 	Steps.prototype.step = function()
 	{
-		this._step.apply(this,arguments) ;
+		for(var i=0;i<arguments.length;i++)
+		{
+			if(arguments[i] && arguments[i].constructor==Array)
+			{
+				var presetArgs = arguments[i++] ;
+			}
+			this._steps.splice(this._insertPos++,0,{
+				func: arguments[i]
+				, presetArgs: presetArgs
+				, trylevel: this._trylevel
+			}) ;
+		}
 		return this ;
 	}
 	Steps.prototype.appendStep = function()
 	{
 		for(var i=0;i<arguments.length;i++)
 		{
-			this._steps.push(this._buildStep(arguments[i])) ;
+			if(arguments[i] && arguments[i].constructor==Array)
+			{
+				var presetArgs = arguments[i++] ;
+			}
+			this._steps.push({
+				func: arguments[i]
+				, presetArgs: presetArgs
+				, trylevel: this._trylevel
+			}) ;
 		}
 		return this ;
 	}
 	Steps.prototype.hold = function()
 	{
-		var newsteps=[], names=[] ;
-		for(var i=0;i<arguments.length;i++)
-		{
-			((typeof arguments[i]=='function'||(arguments[i]&&arguments[i].constructor===Array))? newsteps: names) .push(arguments[i]) ;
-		}
-		var newsteps = this._step.apply(this,newsteps) ;
-
+		var names=arguments ;
 		var holdIndex = this._lastHoldIndex = this._pauseCounter ++ ;
 		
 		var callbacked = false ;
-
 		return (function(){
 			// 只调用一次有效
 			if(callbacked) return ;
 			callbacked = true ;
 
+			// 搜集到 recv 里
 			this.recv[holdIndex] = arguments ;
-			
 			for(var i=0;i<names.length;i++)
 			{
 				names[i] && (this.recv[names[i].toString()] = arguments[i]) ;
-			}
-			
-			for(var i=0;i<newsteps.length;newsteps++)
-			{
-				newsteps[i].presetArgs = arguments ;
 			}
 			
 			// 最后一次 hold() 被 release

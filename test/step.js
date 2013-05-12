@@ -34,7 +34,7 @@ describe("ocSteps",function(){
 				(flag++).should.be.eql(5) ;
 				done() ;
 			}) () ;
-		})
+		}) ;
 		
 		
 		
@@ -165,6 +165,55 @@ describe("ocSteps",function(){
 				(flag++).should.be.eql(5) ;
 				done() ;
 			}) () ;
-		})
+		}) ;
+		
+		
+		
+		it("绑定参数",function(done){
+
+			var flag = 0 ;
+
+			Steps(
+	
+				[1,2,3], function(a,b,c){
+					
+					a.should.be.eql(1) ;
+					b.should.be.eql(2) ;
+					c.should.be.eql(3) ;
+					
+					(flag++).should.be.eql(0) ;
+				}
+	
+				, function(){
+					this.step(function(){
+						(flag++).should.be.eql(1) ;
+					}) ;
+					this.step(function(){
+						(flag++).should.be.eql(2) ;
+					}) ;
+					this.step(function(){
+						(flag++).should.be.eql(3) ;
+						
+						return 789 ;
+					}) ;
+				}
+	
+				, [4,5,6], function(a,b,c){
+				
+					a.should.be.eql(4) ;
+					b.should.be.eql(5) ;
+					c.should.be.eql(6) ;
+					
+					this.prevReturn.should.be.eql(789) ;
+					
+					(flag++).should.be.eql(4) ;
+				}
+				
+			).on("done",function(){
+				(flag++).should.be.eql(5) ;
+				done() ;
+			}) () ;
+		}) ;
+		
 	}) ;
 }) ;
