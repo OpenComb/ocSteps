@@ -14,7 +14,7 @@
 	} ;
 	Steps.prototype.on = Steps.prototype.once = function(eventName,func)
 	{
-		this._events[eventName] && this._events[eventName].push(func) ;
+		func && this._events[eventName] && this._events[eventName].push(func) ;
 		return this ;
 	}
 	Steps.prototype.emit = function(eventName)
@@ -123,8 +123,8 @@
 					throw this.uncatchException ;
 				}
 			}
-			//
-			this.emit("done",this.prevReturn) ;
+			// done 事件
+			this.emit("done",this.uncatchException||null) ;
 			// 停止
 			return this ;
 		}

@@ -544,7 +544,7 @@ Steps(
 		console.log("step 3") ;
 	}
 
-).on("done",function(){
+).on("done",function(err){
 	console.log("over.") ;
 }) () ;
 ```
@@ -557,7 +557,11 @@ step 2
 over .
 ```
 
-`this.terminate()` 终止任务链后，仍然会触发"done"事件
+* `this.terminate()` 终止任务链后，仍然会触发"done"事件
+
+* `done` 事件触发时会将 uncatch exception 传递给事件函数，否则传入 null
+
+* 可以在 `done` 的事件函数里使用 `prevReturn` 和 `recv` 访问最后一个 step function 的执行结果。
 
 
 ### 事件：uncatch
