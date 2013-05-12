@@ -89,7 +89,6 @@ describe("ocSteps",function(){
 						function(error){
 							(flag++).should.be.eql(4) ;
 							error.message.should.be.eql("some error occured") ;
-	
 						}
 						// final body
 						, function(){
@@ -140,7 +139,7 @@ describe("ocSteps",function(){
 		it("catch到异常时执行final",function(done){
 	
 			var flag = 0 ;
-	
+
 			Steps(function(){
 				this.try(function(){
 					(flag++).should.be.eql(0) ;

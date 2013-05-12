@@ -6,7 +6,7 @@ __ocSteps__ 是一个JavaScript异步执行辅助工具，主要用于支持 Nod
 
 __ocSteps__ 维护一个动态的任务链，任务链上的每个节点都是一个可执行函数，这些函数称为 step ，ocSteps 会依次执行任务链上的每个 step 。任务链是动态的，可以在执行过程中向任务链添加 step ，这是 ocSteps 和其他流行的异步操作库的主要区别（例如 [Step](https://github.com/creationix/step), [Async.js](https://github.com/caolan/async)）：不是提供各种规则来定义执行顺序，而是在任务链的执行过程中逐步定义任务链。
 
-> 根据我最近的Node.js开发经验，静态地定义任务链结构，实际上会制造许多繁琐的编码工作；而动态地“演进”任务链，更吻合我们在思考业务逻辑时的思路，这让开发编码更加流畅，并且明显减少编码工作。
+> 根据我最近的Node.js开发经验，静态地定义任务链结构，实际上会制造许多繁琐的编码工作；而动态地“演进”任务链，更吻合我们在思考业务逻辑时的思路，能让开发编码更加流畅，并且明显减少编码工作。
 
 __ocSteps__ 参考了 [Step](https://github.com/creationix/step) 的设计，但是规则还要更简单（ocSteps包括注释和疏散的空行在内也只有200+行代码）；并且 ocSteps 是为复杂、动态的任务链而设计。
 
@@ -25,7 +25,8 @@ __ocSteps__ 参考了 [Step](https://github.com/creationix/step) 的设计，但
 * [绑定参数] (#-11)
 * [绑定对象] (#-12)
 * [分支] (#-13)
-* [在浏览器中使用] (#-14)
+* [循环] (#-14)
+* [在浏览器中使用] (#-15)
 
 
 
@@ -172,7 +173,7 @@ Steps(
 ) () ;
 ```
 
-两次打印的时间会相差 3秒，因为最长一次 setTimeout() 是3秒 。
+两次输出的时间会相差 3秒，因为最长一次 setTimeout() 是3秒 。
 
 上面这个例子的执行过程如下：
 
@@ -273,7 +274,7 @@ Steps(
 ) () ;
 ```
 
-打印：
+输出：
 ```
 1
 3
@@ -320,7 +321,7 @@ Steps(
 ) () ;
 ```
 
-打印出来的是（d在c的前面）：
+输出出来的是（d在c的前面）：
 ```
 funcA
 funcB
@@ -393,7 +394,7 @@ Steps(
 ) () ;
 ```
 
-打印的结果是：
+输出的结果是：
 
 ```
 insert 3 step functions one time:
@@ -491,7 +492,7 @@ steps.catch(
 steps() ;
 ```
 
-打印:
+输出:
 ```
 step 1
 step 2
@@ -549,7 +550,7 @@ Steps(
 }) () ;
 ```
 
-打印：
+输出：
 
 ```
 step 1
@@ -613,13 +614,13 @@ Steps(
 ) () ;
 ```
 
-打印：
+输出：
 ```
 foo
 bar
 ```
 
-这个程序会打印预先传入的参数 `bar` 而不是从前一个 step函数传来的 `foo` 。
+这个程序会输出预先传入的参数 `bar` 而不是从前一个 step函数传来的 `foo` 。
 
 `step()` 除了接收 function 类型参数，还可以接收 Array 类型。Array参数会和后一个 function 绑定，作为 function 执行时的参数列表。	
 
@@ -676,7 +677,7 @@ Steps(
 ) () ;
 ```
 
-打印的结果是：
+输出的结果是：
 ```
 Always prints the last time value of the variable i in the for loop:
 3
@@ -694,10 +695,9 @@ Better way: the value of variable i in each loop has saved, and then pass to ste
 
 如果在循环中使用 `this.step()` ，并在 step function 里访问闭包变量，可能完全不是你想要的结果。
 
-例子里的三种方式，第一种方式是有问题的：执行 step function 打印闭包变量i时，循环已经结束了，所以i总是等于最后一次循环过程中的值：3；
+例子里的三种方式，第一种方式是有问题的：执行 step function 输出闭包变量i时，循环已经结束了，所以i总是等于最后一次循环过程中的值：3；
 
 第二种方式可以避免这个问题，这是闭包编程中避免此类问题的常见模式；而第三种方式更简单。
-
 
 
 
@@ -735,6 +735,121 @@ Steps(
 
 
 `bind()`是一个为框架作者提供的方法，他们可以将 ocSteps 整合到他们的框架中。例如将任务链绑定给控制器，就得到了一个支持异步操作的控制器，那些 step function 实际上就成了控制器的方法。
+
+
+
+## 循环
+
+```javascript
+
+var Steps = require("ocsteps") ;
+
+Steps(
+
+	function ()
+	{
+		this.loop(function(i){
+		
+			if(i>3)
+			{
+				// 结束循环
+				this.break(i) ;
+			}
+			
+			console.log('loop ',i) ;
+			
+			return ++i ;
+		}) ;
+		
+		// 传个 loop step 的参数
+		return 0 ;
+	}
+	
+	// break() 会将收到的参数传递给循环结束后的下一个step
+	, function(i)
+	{
+		console.log('break ',i) ;
+	}
+
+) () ;
+
+
+```
+
+输出：
+
+```
+loop 0
+loop 1
+loop 2
+loop 3
+break 4
+```
+
+在循环中同样可以调用 `hold()` 和 `step()` 等方法
+
+```javascript
+
+var Steps = require("ocsteps") ;
+
+
+Steps(
+
+	function ()
+	{
+		this.loop(function(i){
+		
+			if(i>3)
+			{
+				// 结束循环
+				this.break(i) ;
+			}
+			
+			console.log('loop ',i) ;
+			
+			// 异步操作
+			var release = this.hold() ;
+			setTimeout(function(){
+				// 1秒钟后，将 i 传递给 step 
+				release(i) ;
+			},1000) ;
+			
+			this.step(function(i){
+			
+				console.log('step in loop ',i) ;
+				
+				// 传递给下一次 loop
+				return ++i ;
+			}) ;
+		}) ;
+		
+		// 传个 loop step 的参数
+		return 0 ;
+	}
+	
+	// break() 会将收到的参数传递给循环结束后的下一个step
+	, function(i)
+	{
+		console.log('break ',i) ;
+	}
+
+) () ;
+
+
+```
+
+
+```
+loop 0
+step in loop 0
+loop 1
+step in loop 1
+loop 2
+step in loop 2
+loop 3
+step in loop 3
+break 4
+```
 
 
 ## 分支
@@ -777,7 +892,7 @@ Steps(
 ) () ;
 ```
 
-打印：
+输出：
 ```
 master step 1
 master step 2, input: a
@@ -799,6 +914,8 @@ master step 3, input: d
 * 分支和主干可以绑定不同的对象
 
 * `fork()` 和 绑定对象，可以使 ocSteps 更好地集成到框架里
+
+
 
 
 ## 在浏览器中使用

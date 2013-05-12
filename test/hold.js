@@ -133,6 +133,39 @@ describe("ocSteps",function(){
 			) () ;
 		
 		}) ;
+		
+		
+		
+		it("this.hold() 被同步release",function(done){
+	
+			var flag = 0 ;
+			
+			Steps(
+			
+			    function(){
+			    
+			    	// hold
+			       	var release = this.hold() ;
+			       	
+			       	// 释放
+			       	release(1,2,3) ;
+			       	
+			       	(flag++).should.be.eql(0) ;
+			       	
+			       	return '456' ;
+			    }
+			
+			    , function(a,b,c){
+			       	(flag++).should.be.eql(1) ;
+			       	a.should.be.eql(1) ;
+			       	b.should.be.eql(2) ;
+			       	c.should.be.eql(3) ;
+			       	this.prevReturn.should.be.eql('456') ;
+			       	done() ;
+			    }
+			
+			) () ;
+		}) ;
 	
 	}) ;
 }) ;

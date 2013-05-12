@@ -3,15 +3,16 @@
 	Steps.prototype.ctor = function()
 	{
 		this._steps = [] ;
-		this._pauseCounter = 0 ;
 		this._trylevel = 0 ;
 		this.uncatchException = undefined ;
 		this._bindo = this.do.bind(this) ;
-		this._insertPos = 0 ;
 		this.prevReturn = undefined ;
-		this._lastHoldRecv = undefined ;
 		this.recv = [] ;
 		this._events = { 'uncatch': [], 'done': [] }
+		this._seek = 0 ;
+		this._insertPos = 0 ;
+		this.current = undefined ;
+		this.prev = undefined ;
 	} ;
 	Steps.prototype.on = Steps.prototype.once = function(eventName,func)
 	{
@@ -40,45 +41,56 @@
 			, finalBody: final
 			, isCatchBody: true
 			, trylevel: this._trylevel --
+			, name: body.name
 		}) ;
+		return this ;
+	}
+	Steps.prototype._eachSteps = function(args,func){
+		for(var i=0;i<args.length;i++){
+			if(args[i] && args[i].constructor==Array)
+			{
+				var presetArgs = args[i++] ;
+			}
+			func.call(this,{
+				func: args[i]
+				, presetArgs: presetArgs
+				, trylevel: this._trylevel
+				, name: args[i].name
+			}) ;
+		}
 		return this ;
 	}
 	Steps.prototype.step = function()
 	{
-		for(var i=0;i<arguments.length;i++)
-		{
-			if(arguments[i] && arguments[i].constructor==Array)
-			{
-				var presetArgs = arguments[i++] ;
-			}
-			this._steps.splice(this._insertPos++,0,{
-				func: arguments[i]
-				, presetArgs: presetArgs
-				, trylevel: this._trylevel
-			}) ;
-		}
-		return this ;
+		return this._eachSteps(arguments,function(step){
+			this._steps.splice(this._insertPos++,0,step) ;
+		}) ;
 	}
 	Steps.prototype.appendStep = function()
 	{
-		for(var i=0;i<arguments.length;i++)
-		{
-			if(arguments[i] && arguments[i].constructor==Array)
-			{
-				var presetArgs = arguments[i++] ;
-			}
-			this._steps.push({
-				func: arguments[i]
-				, presetArgs: presetArgs
-				, trylevel: this._trylevel
-			}) ;
-		}
-		return this ;
+		return this._eachSteps(arguments,function(step){
+			this._steps.push(step) ;
+		}) ;
+	}
+	Steps.prototype.loop = function()
+	{
+		return this._eachSteps(arguments,function(step){
+			step.block = true ;
+			this._steps.splice(this._insertPos++,0,step) ;
+		}) ;
+		
 	}
 	Steps.prototype.hold = function()
 	{
+		var step = this.current ;
+		
+		step.recv || (step.recv=[]) ;
+		var holdIndex = step.recv.length ;
+		
 		var names=arguments ;
-		var holdIndex = this._lastHoldIndex = this._pauseCounter ++ ;
+		
+		step._holdsCounter || (step._holdsCounter=0) ;
+		step._holdsCounter ++ ;
 		
 		var callbacked = false ;
 		return (function(){
@@ -87,30 +99,33 @@
 			callbacked = true ;
 
 			// 搜集到 recv 里
-			this.recv[holdIndex] = arguments ;
+			step.recv[holdIndex] = arguments ;
 			for(var i=0;i<names.length;i++)
 			{
-				names[i] && (this.recv[names[i].toString()] = arguments[i]) ;
+				names[i] && (step.recv[names[i].toString()] = arguments[i]) ;
 			}
 			
-			// 最后一次 hold() 被 release
-			if(this._lastHoldIndex==holdIndex)
-			{
-				this._lastHoldRecv = arguments ;
-			}
-
-			(--this._pauseCounter)<1 && this._doOnNextTick() ;
+			(--step._holdsCounter)<1 && this._doOnNextTick() ;
 
 		}).bind(this) ;
 	}
 	Steps.prototype.terminate = function(){ throw {signal:'terminate'} ; }
-	Steps.prototype._makesureStepArgs = function(presetArgs){ return presetArgs || this._lastHoldRecv || [this.prevReturn] ; }
+	Steps.prototype.break = function(){
+		this.current.return = arguments ;
+		throw { signal: 'break' } ;
+	}
+	Steps.prototype._makesureStepArgs = function(presetArgs){
+		if(presetArgs) return presetArgs ;
+		if(!this.prev) return ;
+		return ( this.prev.recv && this.prev.recv[this.prev.recv.length-1] )
+				|| ( (this.prev.return&&this.prev.return.callee)? this.prev.return: [this.prev.return] ) ;
+	}
 	Steps.prototype.do = function()
 	{
-		if(this._pauseCounter) return this ;
+		if(this.current && this.current._holdsCounter) return this ;
 
 		// 整个任务链结束
-		if(!this._steps.length)
+		if(this._seek>=this._steps.length)
 		{
 			// 处理 uncatch 异常
 			if( this.uncatchException )
@@ -130,55 +145,75 @@
 			return this ;
 		}
 
-		var step = this._steps.shift() ;
-
 		// 重置状态
-		this._insertPos = 0 ;
-		this._trylevel = step.trylevel ;
+		if(this.current && !this.current.isCatchBody)
+		{
+			this.prev = this.current ;
+			this.prevReturn = this.prev.return ;
+			this.recv = this.prev.recv ;
+		}
+		this.current = this._steps[this._seek] ;
+
+		this._insertPos = this._seek + (this.current.block? 0: 1) ;
+		this._trylevel = this.current.trylevel ;
+		
 		try{
-			if( step.isCatchBody )
+			if( this.current.isCatchBody )
 			{
-				if(step.finalBody)
+				if(this.current.finalBody)
 				{
-					step.finalBody.call( this ) ;
+					this.current.finalBody.call( this ) ;
 				}
 
 				if(this.uncatchException)
 				{
 					var uncatchException = this.uncatchException ;
 					this.uncatchException = undefined ;
-	
-					step.func.call( this, uncatchException ) ;
+
+					this.current.func.call( this, uncatchException ) ;
 				}
 			}
 			else
-			{			
-				this.prevReturn = step.func.apply( this, this._makesureStepArgs(step.presetArgs) ) ;
+			{
+				this.current.return = this.current.func.apply( this, this._makesureStepArgs(this.current.presetArgs) ) ;
 			}
+
+			if( !this.current.block )
+			{
+				this._seek ++ ;
+			}
+
 		}catch(err){
 
-			this.prevReturn = undefined ;
-
-			if(err.signal&&err.signal=='terminate')
+			if(err.signal)
 			{
-				this._steps = [] ;
+				if(err.signal=='break')
+				{
+					this._seek ++ ;
+				}
+				else if(err.signal=='terminate')
+				{
+					this._seek = this._steps.length ;
+				}
 			}
 			else
 			{
-				this.uncatchException = err ;
-				this._skipUntilCatchBody(step.trylevel) ;	// this._trylevel 可能已经在 step 执行时被改变了，所以用 step.trylevel 比较
+				// 跳过同 trylevel 下的后续 step
+				for( this._seek ++; this._seek<this._steps.length; this._seek ++ )
+				{
+					if( this._steps[this._seek].isCatchBody && this._steps[this._seek].trylevel<=this.current.trylevel )
+						break ;
+				}
+			
+				this.uncatchException = this.current.exception = err ;
 			}
 		}
-
-		// 清空，等待异步操作回调时填充
-		this.recv = [] ;
-		this._lastHoldRecv = undefined ;
 
 		return this._doOnNextTick() ;
 	}
 	Steps.prototype._doOnNextTick = function()
 	{
-		if( this._pauseCounter ) return ;
+		if( this.current && this.current._holdsCounter ) return ;
 
 		process&&process.nextTick?
 			process.nextTick(this._bindo) :
@@ -186,40 +221,24 @@
 
 		return this ;
 	}
-	Steps.prototype._skipUntilCatchBody = function(steplevel)
-	{
-		// 跳过同 trylevel 下的后续 step
-		while( this._steps.length )
-		{
-			if( this._steps[0].isCatchBody && this._steps[0].trylevel<=steplevel )
-				break ;
-			this._steps.shift() ;
-		}
-	}
-
 	Steps.prototype.fork = function()
 	{
-		var fork=new Steps(), master=this ;
-		fork.step.apply(fork,arguments) ;
+		var fork = steps.apply(null,arguments), master=this ;
 
 		this.step(function(){
 			// 传递参数
 			fork._steps[0] && (!fork._steps[0].presetArgs) && (fork._steps[0].presetArgs=arguments) ;
 			var forkreturn ;
-			fork.appendStep( function(){
+			fork.appendStep( function __forktail__(){
 				forkreturn = arguments ;
 			} ) ;
 			// 执行
 			var release = this.hold() ;
 			fork.once("done",function(){
-					release.apply(this,forkreturn) ;
-				})
-				.once("uncatch",function(error){
-					// 在 master 上继续抛出异常
-					master.uncatchException = error ;
-					master._skipUntilCatchBody(master._trylevel) ;
-				})
-				._doOnNextTick() ;
+				release.apply(this,forkreturn) ;
+			}).once("uncatch",function(error){
+				master.uncatchException = error ;
+			}) () ;
 		}) ;
 
 		return fork ;
