@@ -1,5 +1,6 @@
 (function(){
-	var Steps = function()
+	var Steps = function(){ this.ctor() } ;
+	Steps.prototype.ctor = function()
 	{
 		this._steps = [] ;
 		this._pauseCounter = 0 ;
@@ -226,16 +227,19 @@
 	
 	// 导出 ---
 	function steps(){
-		var steps=new Steps, func;
+		var steps = function(){
+			steps._doOnNextTick() ;
+		} ;
+		for(var name in Steps.prototype)
+			steps[name] = Steps.prototype[name] ;
+		steps.ctor() ;
 		steps.step.apply(steps,arguments) ;
-		(func = function(){steps._doOnNextTick()}).__proto__ = steps ;
-		return func ;
+		return steps ;
 	}
 	// node.js
 	if(typeof module!='undefined' && typeof exports!='undefined' && module.exports)
 	{
 		module.exports = steps ;
-		module.exports.Steps = Steps ;
 	}
 	// browser
 	else if(typeof window!='undefined')
