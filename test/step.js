@@ -1,13 +1,14 @@
-var steps = require("../index.js") ;
+var Steps = require("../index.js") ;
 
 describe("ocSteps",function(){
 
 	describe("#step()",function(){
+	
 		it("using this.step() one by one",function(done){
 
 			var flag = 0 ;
 
-			steps(
+			Steps(
 	
 				function(){
 					(flag++).should.be.eql(0) ;
@@ -32,7 +33,7 @@ describe("ocSteps",function(){
 			).on("done",function(){
 				(flag++).should.be.eql(5) ;
 				done() ;
-			}) ;
+			}) () ;
 		})
 		
 		
@@ -41,7 +42,7 @@ describe("ocSteps",function(){
 
 			var flag = 0 ;
 	
-			steps(
+			Steps(
 	
 				function(){
 					(flag++).should.be.eql(0) ;
@@ -89,7 +90,7 @@ describe("ocSteps",function(){
 			).on("done",function(){
 				(flag++).should.be.eql(6) ;
 				done() ;
-			}) ;
+			}) () ;
 		})
 	}) ;
 	
@@ -102,7 +103,7 @@ describe("ocSteps",function(){
 	
 			var flag = 0 ;
 	
-			steps(
+			Steps(
 	
 				function(){
 					(flag++).should.be.eql(0) ;
@@ -127,7 +128,7 @@ describe("ocSteps",function(){
 			).on("done",function(){
 					(flag++).should.be.eql(5) ;
 				done() ;
-			}) ;
+			}) () ;
 		})
 		
 		
@@ -136,7 +137,7 @@ describe("ocSteps",function(){
 	
 			var flag = 0 ;
 	
-			steps(
+			Steps(
 	
 				function(){
 					(flag++).should.be.eql(0) ;
@@ -163,7 +164,7 @@ describe("ocSteps",function(){
 			).on("done",function(){
 				(flag++).should.be.eql(5) ;
 				done() ;
-			}) ;
+			}) () ;
 		})
 	}) ;
 }) ;

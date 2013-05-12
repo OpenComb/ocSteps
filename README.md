@@ -73,7 +73,7 @@ Steps(
 		return ++i ;
 	}
 
-) ;
+) () ; // 连续调用，开始执行任务链
 ```
 
 输出的结果是：
@@ -84,7 +84,36 @@ step 2
 step 3
 ```
 
+也可以将任务链的定义和执行分开，先定义好，晚一点再执行它
 
+```javascript
+var Steps = require("ocsteps") ;
+
+var steps = Steps(
+
+	function(){
+		var i = 1 ;
+		console.log('step ',i) ;
+		return ++i ;
+	}
+
+	, function(i){
+		console.log('step ',i) ;		
+		return ++i ;
+	}
+) ;
+
+
+steps.step(function(i){
+	console.log('step ',i) ;
+	return ++i ;
+}) ;
+
+
+// 执行任务链
+steps() ;
+
+```
 
 ## 异步操作
 
@@ -107,7 +136,7 @@ Steps(
 		
 		console.log(buff.toString()) ;
 	}
-) ;
+) () ;
 ```
 
 调用 `hold()` 会让任务链的执行暂停，并且返回一个 release函数，直到这个release函数被调用后，任务链才继续执行。release接受到的参数，会传递给下一个 step function 。
@@ -140,7 +169,7 @@ Steps(
 		console.log( new Date() ) ;
 	}
 
-) ;
+) () ;
 ```
 
 两次打印的时间会相差 3秒，因为最长一次 setTimeout() 是3秒 。
@@ -212,7 +241,7 @@ Steps(
 			&& console.log( buffC.toString() ) ;
 	}
 	
-) ;
+) () ;
 ```
 
 
@@ -241,7 +270,7 @@ Steps(
     	console.log(this.prevReturn) ;
     }
 
-) ;
+) () ;
 ```
 
 打印：
@@ -288,7 +317,7 @@ Steps(
 		console.log("funcD") ;
 	}
 
-) ;
+) () ;
 ```
 
 打印出来的是（d在c的前面）：
@@ -361,7 +390,7 @@ Steps(
 		}) ;
 	}
 
-) ;
+) () ;
 ```
 
 打印的结果是：
@@ -406,7 +435,7 @@ Steps(
 		console.log("You dont see this text too.") ;
 	}
 
-) ;
+) () ;
 ```
 
 > 通过 `this.terminate()` 终止的任务链，仍然会触发`done`事件。
@@ -423,7 +452,7 @@ Steps(
 ```javascript
 var Steps = require("ocsteps") ;
 
-steps = Steps() ;
+var steps = Steps() ;
 
 steps.try()
 
@@ -456,6 +485,10 @@ steps.catch(
 		console.log("final") ;	
 	}
 ) ;
+
+
+// 定义完毕，开始执行任务链
+steps() ;
 ```
 
 打印:
@@ -513,7 +546,7 @@ Steps(
 
 ).on("done",function(){
 	console.log("over.") ;
-}) ;
+}) () ;
 ```
 
 打印：
@@ -554,7 +587,7 @@ Steps(
 
 ).on("done",function(){
 	console.log("over.") ;
-}) ;
+}) () ;
 ```
 
 ## 绑定参数
@@ -576,7 +609,7 @@ Steps(
 		, ["bar"]
 	]
 
-) ;
+) () ;
 ```
 
 打印：
@@ -638,7 +671,7 @@ Steps(
         }
     }
 
-) ;
+) () ;
 ```
 
 打印的结果是：
@@ -693,7 +726,7 @@ Steps(
 	}
 	
 
-).bind(object) ;
+).bind(object) () ;
 ```
 
 > 由于 ie 不支持 __proto__，`bind()` 在全系列 ie 下无效（但不会报错）。
@@ -739,7 +772,7 @@ Steps(
 	, function(arg){
 		console.log("master step 3, ","input: ",arg) ;
 	}
-) ;
+) () ;
 ```
 
 打印：
@@ -800,7 +833,7 @@ Step(
 		console.log(this.recv.data) ;
 	}
 
-) ;
+) () ;
 
 </script>
 

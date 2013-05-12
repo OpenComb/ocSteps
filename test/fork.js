@@ -45,7 +45,7 @@ describe("ocSteps",function(){
 			).on("done",function(){
 				(flag++).should.be.eql(5) ;
 				done() ;
-			}) ;
+			}) () ;
 		})
 
 
@@ -89,9 +89,9 @@ describe("ocSteps",function(){
 				}
 
 			).on("done",function(){
-					(flag++).should.be.eql(5) ;
-					done() ;
-				}) ;
+				(flag++).should.be.eql(5) ;
+				done() ;
+			}) () ;
 		})
 	}) ;
 }) ;

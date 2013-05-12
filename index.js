@@ -214,9 +214,7 @@
 		while( this._steps.length )
 		{
 			if( this._steps[0].isCatchBody && this._steps[0].trylevel<=steplevel )
-			{
 				break ;
-			}
 			this._steps.shift() ;
 		}
 	}
@@ -251,8 +249,10 @@
 	
 	// 导出 ---
 	function steps(){
-		var steps=new Steps;
-		return steps.step.apply(steps,arguments)._doOnNextTick() ;
+		var steps=new Steps, func;
+		steps.step.apply(steps,arguments) ;
+		(func = function(){steps._doOnNextTick()}).__proto__ = steps ;
+		return func ;
 	}
 	// node.js
 	if(typeof module!='undefined' && typeof exports!='undefined' && module.exports)
