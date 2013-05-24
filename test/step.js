@@ -215,5 +215,31 @@ describe("ocSteps",function(){
 			}) () ;
 		}) ;
 		
+		
+		it("启动参数",function(done){
+		
+			Steps(
+	
+				function(i){
+					i.should.be.eql(0) ;
+					return i + 1 ;
+				}
+	
+				, function(i){
+					i.should.be.eql(1) ;
+					return i + 1 ;
+				}
+	
+				, function(i){
+					i.should.be.eql(2) ;
+					return i+1 ;
+				}
+				
+			).on("done",function(){
+				this.prev.return.should.be.eql(3) ;
+				done() ;
+			}) (0) ;
+		}) ;
+		
 	}) ;
 }) ;

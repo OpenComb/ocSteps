@@ -145,6 +145,61 @@ Steps(
 通常将`hold()`返回的release函数 作为某个异步操作的回调函数。
 
 
+在访问 mongodb 时使用 hold/release
+```javascript
+var mongodb = require('mongodb');
+
+var steps = Steps(
+
+	function()
+	{
+		// 连接到 mongodb 服务器
+		var server = new mongodb.Server('127.0.0.1',27017) ;
+		new mongodb.Db("your-db-name",server,{w:1})).open(this.hold()) ;
+
+		this.step(function(err,client)
+		{
+			if(err) throw err ;
+			return new mongodb.Collection(client,"your-collection-name") ;
+		}) ;
+	}
+
+	, function(collection)
+	{
+		var release = this.hold() ;
+		var count = 0 ;
+
+		collection.find().each(function(err,doc){
+			if(err)
+			{
+				steps.throw(err) ;
+				return ;
+			}
+
+			if(doc)
+			{
+				console.log(doc) ;
+				count ++ ;
+			}
+			else
+			{
+				release(count) ;
+			}
+		})
+	}
+
+	, function(count)
+	{
+		console.log("total:"+count) ;
+	}
+
+) () ;
+
+```
+
+
+
+
 ### 暂停计数器
 
 > 可以连续调用多次 `hold()` ，每调用一次 `hold()` 任务链的暂停计数器 +1，并返回一个 release 函数，暂停计数器>0 时任务链暂停；

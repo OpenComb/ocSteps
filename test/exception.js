@@ -261,5 +261,41 @@ describe("ocSteps",function(){
 			}) () ;
 		}) ;
 		
+		it("throw() 抛出异常",function(done){
+
+
+			var flag = 0 ;
+			Steps(function(){
+			
+				this.step(
+					function(error){	
+						(flag++).should.be.eql(0) ;
+					}
+					, function(){
+						(flag++).should.be.eql(1) ;
+						this.throw( new Error(flag) ) ;
+					}
+					, function(error){
+						should.fail('unreached!') ;
+						(flag++).should.be.eql(2) ;	
+					}
+					, function(error){
+						should.fail('unreached!') ;	
+						(flag++).should.be.eql(3) ;
+					}
+				) ;
+			
+				this.catch(
+					function(error){
+						(flag++).should.be.eql(2) ;
+					}
+				) ;
+				
+			}).on("uncatch",function(){
+				done() ;
+			}) () ;
+
+
+		}) ;
 	}) ;
 }) ;

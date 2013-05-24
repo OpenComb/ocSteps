@@ -5,14 +5,15 @@
 		this._steps = [] ;
 		this._trylevel = 0 ;
 		this.uncatchException = undefined ;
-		this._bindo = this.do.bind(this) ;
 		this.prevReturn = undefined ;
 		this.recv = [] ;
-		this._events = { 'uncatch': [], 'done': [] }
+		this._events = { 'start':[], 'uncatch': [], 'done': [] }
 		this._seek = 0 ;
 		this._insertPos = 0 ;
 		this.current = undefined ;
 		this.prev = undefined ;
+		this._tickid = 0 ;
+		this._startupArgs ;
 	} ;
 	Steps.prototype.on = Steps.prototype.once = function(eventName,func)
 	{
@@ -72,14 +73,6 @@
 			this._steps.push(step) ;
 		}) ;
 	}
-	Steps.prototype.loop = function()
-	{
-		return this._eachSteps(arguments,function(step){
-			step.block = true ;
-			this._steps.splice(this._insertPos++,0,step) ;
-		}) ;
-		
-	}
 	Steps.prototype.hold = function()
 	{
 		var step = this.current ;
@@ -109,6 +102,8 @@
 
 		}).bind(this) ;
 	}
+	
+	Steps.prototype.rewind = function(){ this._seek = 0 ; this._doOnNextTick() }
 	Steps.prototype.terminate = function(){ throw {signal:'terminate'} ; }
 	Steps.prototype.break = function(){
 		this.current.return = arguments ;
@@ -116,13 +111,36 @@
 	}
 	Steps.prototype._makesureStepArgs = function(presetArgs){
 		if(presetArgs) return presetArgs ;
+		if(this._startupArgs)
+		{
+			var startupArgs = this._startupArgs ;
+			this._startupArgs = undefined ;
+			return startupArgs ;
+		}
 		if(!this.prev) return ;
 		return ( this.prev.recv && this.prev.recv[this.prev.recv.length-1] )
 				|| ( (this.prev.return&&this.prev.return.callee)? this.prev.return: [this.prev.return] ) ;
 	}
-	Steps.prototype.do = function()
+	Steps.prototype.do = function(tickid)
 	{
-		if(this.current && this.current._holdsCounter) return this ;
+		// 暂停
+		if(this.current && this.current._holdsCounter)
+			return this ;
+			
+		if(tickid!=this._tickid)
+			return ;
+		if( (this._tickid++) == 0 )
+		{
+			this.emit('start') ;
+		}
+
+		// 设置 prev 状态
+		if(this.current && !this.current.isCatchBody)
+		{
+			this.prev = this.current ;
+			this.prevReturn = this.prev.return ;
+			this.recv = this.prev.recv ;
+		}
 
 		// 整个任务链结束
 		if(this._seek>=this._steps.length)
@@ -146,14 +164,7 @@
 		}
 
 		// 重置状态
-		if(this.current && !this.current.isCatchBody)
-		{
-			this.prev = this.current ;
-			this.prevReturn = this.prev.return ;
-			this.recv = this.prev.recv ;
-		}
 		this.current = this._steps[this._seek] ;
-
 		this._insertPos = this._seek + (this.current.block? 0: 1) ;
 		this._trylevel = this.current.trylevel ;
 		
@@ -197,27 +208,26 @@
 				}
 			}
 			else
-			{
-				// 跳过同 trylevel 下的后续 step
-				for( this._seek ++; this._seek<this._steps.length; this._seek ++ )
-				{
-					if( this._steps[this._seek].isCatchBody && this._steps[this._seek].trylevel<=this.current.trylevel )
-						break ;
-				}
-			
-				this.uncatchException = this.current.exception = err ;
-			}
+				this.throw(err) ;
 		}
 
 		return this._doOnNextTick() ;
 	}
+	Steps.prototype.throw = function(err)
+	{
+		// 跳过同 trylevel 下的后续 step
+		for( this._seek ++; this._seek<this._steps.length; this._seek ++ )
+			if( this._steps[this._seek].isCatchBody && this._steps[this._seek].trylevel<=this.current.trylevel )
+				break ;
+		this.uncatchException = this.current.exception = err ;
+	}
 	Steps.prototype._doOnNextTick = function()
 	{
-		if( this.current && this.current._holdsCounter ) return ;
-
+		var steps = this ;
+		var tickid = this._tickid ;
 		process&&process.nextTick?
-			process.nextTick(this._bindo) :
-			setTimeout(this._bindo,0) ;
+			process.nextTick(function(){ steps.do(tickid) }) :
+			setTimeout(function(){ steps.do(tickid) },0) ;
 
 		return this ;
 	}
@@ -243,10 +253,19 @@
 
 		return fork ;
 	}
+	Steps.prototype.loop = function()
+	{
+		return this._eachSteps(arguments,function(step){
+			step.block = true ;
+			this._steps.splice(this._insertPos++,0,step) ;
+		}) ;
+	}
 	
 	// 导出 ---
 	function steps(){
 		var steps = function(){
+			if( !steps._steps[steps._seek] ) return ;
+			arguments.length && ( steps._startupArgs = arguments ) ;
 			steps._doOnNextTick() ;
 		} ;
 		for(var name in Steps.prototype)

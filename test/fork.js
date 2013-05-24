@@ -92,6 +92,35 @@ describe("ocSteps",function(){
 				(flag++).should.be.eql(5) ;
 				done() ;
 			}) () ;
-		})
+		}) ;
+
+
+
+
+		it("多个 fork 分支",function(done){
+			var flag = 0 ;
+			Steps(
+				function(){
+					this.fork(function(){
+						flag++ ;
+					})() ;
+
+					this.fork(function(){
+						flag++ ;
+					})() ;
+				}
+
+				, function(i){
+					(flag++).should.be.eql(2) ;
+				}
+
+			).on("done",function(){
+				(flag++).should.be.eql(3) ;
+				done() ;
+			}) () ;
+		}) ;
+
+
+
 	}) ;
 }) ;
