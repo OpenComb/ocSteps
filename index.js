@@ -15,13 +15,13 @@
 		this._tickid = 0 ;
 		this._startupArgs ;
 	} ;
-	Steps.prototype.on = Steps.prototype.once = function(eventName,func)
-	{
+	Steps.prototype.on = Steps.prototype.once = function(eventName,func){
 		func && this._events[eventName] && this._events[eventName].push(func) ;
 		return this ;
 	}
-	Steps.prototype.emit = function(eventName)
-	{
+	Steps.prototype.done = function(func){ this.once("done",func) ; }
+	Steps.prototype.uncatch = function(func){ this.once("uncatch",func) ; }
+	Steps.prototype.emit = function(eventName){
 		var args = [] ;
 		for( var i=1;i<arguments.length;i++ ) args.push(arguments[i]) ;
 		if( this._events[eventName] && this._events[eventName].length )
@@ -52,7 +52,7 @@
 			{
 				var presetArgs = args[i++] ;
 			}
-			func.call(this,{
+			func.call(this,i,{
 				func: args[i]
 				, presetArgs: presetArgs
 				, trylevel: this._trylevel
@@ -63,13 +63,13 @@
 	}
 	Steps.prototype.step = function()
 	{
-		return this._eachSteps(arguments,function(step){
+		return this._eachSteps(arguments,function(i,step){
 			this._steps.splice(this._insertPos++,0,step) ;
 		}) ;
 	}
 	Steps.prototype.appendStep = function()
 	{
-		return this._eachSteps(arguments,function(step){
+		return this._eachSteps(arguments,function(i,step){
 			this._steps.push(step) ;
 		}) ;
 	}
@@ -80,7 +80,14 @@
 		step.recv || (step.recv=[]) ;
 		var holdIndex = step.recv.length ;
 		
-		var names=arguments ;
+		var names = [], steps = [] ;
+		for(var i=0;i<arguments.length;i++)
+			(typeof arguments[i]=='function'? steps: names).push(arguments[i]) ;
+
+		this._eachSteps(steps,function(i,_step){
+			this._steps.splice(this._insertPos++,0,_step) ;
+			steps[i] = _step ;
+		}) ;
 		
 		step._holdsCounter || (step._holdsCounter=0) ;
 		step._holdsCounter ++ ;
@@ -97,6 +104,10 @@
 			{
 				names[i] && (step.recv[names[i].toString()] = arguments[i]) ;
 			}
+
+			// 设置 step 的 presetArgs 参数
+			for(var i=0;i<steps.length;i++)
+				steps[i].presetArgs = step.recv[holdIndex] ;
 			
 			(--step._holdsCounter)<1 && this._doOnNextTick() ;
 
@@ -253,9 +264,8 @@
 
 		return fork ;
 	}
-	Steps.prototype.loop = function()
-	{
-		return this._eachSteps(arguments,function(step){
+	Steps.prototype.loop = function(){
+		return this._eachSteps(arguments,function(i,step){
 			step.block = true ;
 			this._steps.splice(this._insertPos++,0,step) ;
 		}) ;

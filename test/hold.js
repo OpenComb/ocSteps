@@ -1,5 +1,11 @@
 var Steps = require("../index.js") ;
 
+function asyncFunction(ms,args,callback){
+	setTimeout(function(){
+		callback.apply(null,args) ;
+	},ms) ;
+}
+
 describe("ocSteps",function(){
 
 	describe("#hold()",function(){
@@ -27,13 +33,7 @@ describe("ocSteps",function(){
 	
 	
 		it("using this.hold() receive named args",function(done){
-	
-			function asyncFunction(ms,args,callback){
-				setTimeout(function(){
-					callback.apply(null,args) ;
-				},ms) ;
-			}
-			
+				
 			Steps(
 				function(){
 					asyncFunction(0,["1","2","3"],this.hold("a",null,"b")) ;
@@ -167,5 +167,109 @@ describe("ocSteps",function(){
 			) () ;
 		}) ;
 	
+		it("向 this.hold() 传入step function",function(done){
+
+			var flag = 0 ;
+			
+			Steps(
+			
+			    function(){
+			       	(flag++).should.be.eql(0) ;
+
+			    	// hold
+					asyncFunction(0,[1,2,3],this.hold(function(a,b,c){
+			       		a.should.be.eql(1) ;
+			       		b.should.be.eql(2) ;
+			       		c.should.be.eql(3) ;
+			       		(flag++).should.be.eql(2) ;
+			       		return "abc" ;
+			       	})) ;
+			       	
+			       	(flag++).should.be.eql(1) ;
+			    }
+			
+			    , function(data){
+			       	(flag++).should.be.eql(3) ;
+			       	data.should.be.eql("abc") ;
+			       	done() ;
+			    }
+			
+			) () ;
+
+		}) ;
+
+
+		it("在循环中向 this.hold() 传入step function",function(done){
+
+			var flag = 0 ;
+
+			Steps(
+			
+			    function(){
+			       	(flag++).should.be.eql(0) ;
+			    
+			    	// hold
+			    	for(var i=0;i<5;i++)
+			    	{
+			    		(function(i){
+
+							asyncFunction(0,[i],this.hold(function(data){
+								data.should.be.eql(i) ;
+			       				(flag++).should.be.eql(i+1) ;
+							})) ;
+
+			    		}).bind(this) (i) ;
+			        }
+			    }
+			
+			    , function(){
+			       	(flag++).should.be.eql(6) ;
+			       	done() ;
+			    }
+			
+			) () ;
+
+		}) ;
+
+
+		it("在递归中向 this.hold() 传入step function",function(done){
+
+			var flag = 0 ;
+
+			Steps(
+			
+			    function(){
+			       	(flag++).should.be.eql(0) ;
+			    
+			    	// hold
+			    	for(var i=0;i<5;i++)
+			    	{
+			    		(function(i){
+
+							asyncFunction(0,[i],this.hold(function(data){
+								data.should.be.eql(i) ;
+			       				(flag++).should.be.eql(1+i*2) ;
+
+									asyncFunction(0,[1,2,3],this.hold(function(a,b,c){
+										a.should.be.eql(1) ;
+										b.should.be.eql(2) ;
+										c.should.be.eql(3) ;
+			       						(flag++).should.be.eql(1+i*2+1) ;
+									})) ;
+
+							})) ;
+
+			    		}).bind(this) (i) ;
+			        }
+			    }
+			
+			    , function(){
+			       	(flag++).should.be.eql(11) ;
+			       	done() ;
+			    }
+			
+			) () ;
+
+		}) ;
 	}) ;
 }) ;
