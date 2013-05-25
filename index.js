@@ -19,8 +19,8 @@
 		func && this._events[eventName] && this._events[eventName].push(func) ;
 		return this ;
 	}
-	Steps.prototype.done = function(func){ this.once("done",func) ; }
-	Steps.prototype.uncatch = function(func){ this.once("uncatch",func) ; }
+	Steps.prototype.done = function(func){ this.once("done",func) ; return this ;}
+	Steps.prototype.uncatch = function(func){ this.once("uncatch",func) ; return this ;}
 	Steps.prototype.emit = function(eventName){
 		var args = [] ;
 		for( var i=1;i<arguments.length;i++ ) args.push(arguments[i]) ;
