@@ -135,7 +135,7 @@
 	Steps.prototype.do = function(tickid)
 	{
 		// 暂停
-		if(this.current && this.current._holdsCounter)
+		if(!this.uncatchException && this.current && this.current._holdsCounter)
 			return this ;
 			
 		if(tickid!=this._tickid)
