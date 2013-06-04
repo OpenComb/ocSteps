@@ -30,7 +30,8 @@
 			var args = [] ;
 			for( var i=1;i<arguments.length;i++ ) args.push(arguments[i]) ;
 			if(  steps._events[eventName] &&  steps._events[eventName].length )
-				for(var handle;handle=steps._events[eventName].shift();) handle.apply(steps,args) ;
+				for(var handle;handle=steps._events[eventName].shift();)
+                    handle.apply(steps.object||steps,args) ;
 			return steps ;
 		}
 		steps.bind = function(object){
