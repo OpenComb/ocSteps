@@ -24,10 +24,10 @@ __ocSteps__ 参考了 [Step](https://github.com/creationix/step) 的设计，但
 	* [uncatch] (#uncatch)
 * [绑定参数] (#-11)
 * [绑定对象] (#-12)
-* [分支] (#-13)
-* [循环] (#-14)
+* [循环] (#-13)
     * [loop] (#loop)
     * [each] (#each)
+* [分支] (#-14)
 * [在浏览器中使用] (#-15)
 
 
