@@ -1,7 +1,6 @@
 (function(){
 	var Steps = function(){ this.ctor() } ;
-	Steps.prototype.ctor = function()
-	{
+	Steps.prototype.ctor = function(){
 		this._steps = [] ;
 		this._trylevel = 0 ;
 		this.uncatchException = undefined ;
@@ -14,6 +13,7 @@
 		this.prev = undefined ;
 		this._tickid = 0 ;
 		this._startupArgs ;
+		this.object = undefined ;
 	} ;
 	Steps.prototype.on = Steps.prototype.once = function(eventName,func){
 		func && this._events[eventName] && this._events[eventName].push(func) ;
@@ -28,15 +28,18 @@
 			for(var handle;handle=this._events[eventName].shift();) handle.apply(this,args) ;
 		return this ;
 	}
-	Steps.prototype.bind = function(object){ this.__proto__ = object ; return this ; }
+	Steps.prototype.bind = function(object){
+		this.__proto__ = object.__proto__ ;
+		object.__proto__ = this ;
+		this.object = object ;
+		return this ;
+	}
 
-	Steps.prototype.try = function()
-	{
+	Steps.prototype.try = function(){
 		this._trylevel ++ ;
 		return this.step.apply(this,arguments) ;
 	}
-	Steps.prototype.catch = function(body,final)
-	{
+	Steps.prototype.catch = function(body,final){
 		this._steps.splice(this._insertPos++,0,{
 			func: body
 			, finalBody: final
@@ -61,20 +64,17 @@
 		}
 		return this ;
 	}
-	Steps.prototype.step = function()
-	{
+	Steps.prototype.step = function(){
 		return this._eachSteps(arguments,function(i,step){
 			this._steps.splice(this._insertPos++,0,step) ;
 		}) ;
 	}
-	Steps.prototype.appendStep = function()
-	{
+	Steps.prototype.appendStep = function(){
 		return this._eachSteps(arguments,function(i,step){
 			this._steps.push(step) ;
 		}) ;
 	}
-	Steps.prototype.hold = function()
-	{
+	Steps.prototype.hold = function(){
 		var step = this.current ;
 		
 		step.recv || (step.recv=[]) ;
@@ -132,8 +132,7 @@
 		return ( this.prev.recv && this.prev.recv[this.prev.recv.length-1] )
 				|| ( (this.prev.return&&this.prev.return.callee)? this.prev.return: [this.prev.return] ) ;
 	}
-	Steps.prototype.do = function(tickid)
-	{
+	Steps.prototype.do = function(tickid){
 		// 暂停
 		if(!this.uncatchException && this.current && this.current._holdsCounter)
 			return this ;
@@ -192,12 +191,12 @@
 					var uncatchException = this.uncatchException ;
 					this.uncatchException = undefined ;
 
-					this.current.func.call( this, uncatchException ) ;
+					this.current.func.call( this.object||this, uncatchException ) ;
 				}
 			}
 			else
 			{
-				this.current.return = this.current.func.apply( this, this._makesureStepArgs(this.current.presetArgs) ) ;
+				this.current.return = this.current.func.apply( this.object||this, this._makesureStepArgs(this.current.presetArgs) ) ;
 			}
 
 			if( !this.current.block )
@@ -224,16 +223,14 @@
 
 		return this._doOnNextTick() ;
 	}
-	Steps.prototype.throw = function(err)
-	{
+	Steps.prototype.throw = function(err){
 		// 跳过同 trylevel 下的后续 step
 		for( this._seek ++; this._seek<this._steps.length; this._seek ++ )
 			if( this._steps[this._seek].isCatchBody && this._steps[this._seek].trylevel<=this.current.trylevel )
 				break ;
 		this.uncatchException = this.current.exception = err ;
 	}
-	Steps.prototype._doOnNextTick = function()
-	{
+	Steps.prototype._doOnNextTick = function(){
 		var steps = this ;
 		var tickid = this._tickid ;
 		process&&process.nextTick?
@@ -242,8 +239,7 @@
 
 		return this ;
 	}
-	Steps.prototype.fork = function()
-	{
+	Steps.prototype.fork = function(){
 		var fork = steps.apply(null,arguments), master=this ;
 
 		this.step(function(){
@@ -285,13 +281,11 @@
 		return steps ;
 	}
 	// node.js
-	if(typeof module!='undefined' && typeof exports!='undefined' && module.exports)
-	{
+	if(typeof module!='undefined' && typeof exports!='undefined' && module.exports){
 		module.exports = steps ;
 	}
 	// browser
-	else if(typeof window!='undefined')
-	{
+	else if(typeof window!='undefined'){
 		return window.Steps = steps ;
 	}
 }) () ;

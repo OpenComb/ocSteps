@@ -619,6 +619,7 @@ over .
 
 * 可以在 `done` 的事件函数里使用 `prevReturn` 和 `recv` 访问最后一个 step function 的执行结果。
 
+* 可以用 `done(function)` 替代 `on("done",func)`
 
 ### 事件：uncatch
 
@@ -649,6 +650,8 @@ Steps(
 	console.log("over.") ;
 }) () ;
 ```
+
+可以用 `uncatch(function)` 替代 `on("done",func)`
 
 ## 绑定参数
 
@@ -785,6 +788,8 @@ Steps(
 
 ).bind(object) () ;
 ```
+
+> 调用 `bind()` 后，this.object 指向被绑定的对象
 
 > 由于 ie 不支持 __proto__，`bind()` 在全系列 ie 下无效（但不会报错）。
 

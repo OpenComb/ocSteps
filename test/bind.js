@@ -18,12 +18,12 @@ describe("ocSteps",function(){
 				}
 				, function(c){
 					this.b.should.be.eql(456) ;
-					this.b = '098' ;			// 绑定是只读的
+					this.b = '098' ;
 					c.should.be.eql('789') ;
 				}			)
 			.on("done",function(){
 				// 绑定是只读的
-				object.b.should.be.eql(456) ;
+				object.b.should.be.eql('098') ;
 				done() ;
 			})
 			.bind(object) () ;
