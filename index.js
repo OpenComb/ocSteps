@@ -1,5 +1,5 @@
 (function(){
-	var Steps = function(){ this.ctor() } ;
+	var Steps = function(){ this.__$ocsteps$.ctor() } ;
 	Steps.prototype.ctor = function(){
 		this._steps = [] ;
 		this._trylevel = 0 ;
@@ -14,17 +14,18 @@
 		this._tickid = 0 ;
 		this._startupArgs ;
 		this.object = undefined ;
+        this.__$ocsteps$ = this ;
 	} ;
 	Steps.prototype.on = Steps.prototype.once = function(eventName,func){
-		func && this._events[eventName] && this._events[eventName].push(func) ;
+		func &&  this._events[eventName] &&  this._events[eventName].push(func) ;
 		return this ;
 	}
-	Steps.prototype.done = function(func){ this.once("done",func) ; return this ;}
-	Steps.prototype.uncatch = function(func){ this.once("uncatch",func) ; return this ;}
+	Steps.prototype.done = function(func){ this.__$ocsteps$.once("done",func) ; return this ;}
+	Steps.prototype.uncatch = function(func){ this.__$ocsteps$.once("uncatch",func) ; return this ;}
 	Steps.prototype.emit = function(eventName){
 		var args = [] ;
 		for( var i=1;i<arguments.length;i++ ) args.push(arguments[i]) ;
-		if( this._events[eventName] && this._events[eventName].length )
+		if(  this._events[eventName] &&  this._events[eventName].length )
 			for(var handle;handle=this._events[eventName].shift();) handle.apply(this,args) ;
 		return this ;
 	}
@@ -37,14 +38,14 @@
 
 	Steps.prototype.try = function(){
 		this._trylevel ++ ;
-		return this.step.apply(this,arguments) ;
+		return this.__$ocsteps$.step.apply(this,arguments) ;
 	}
 	Steps.prototype.catch = function(body,final){
 		this._steps.splice(this._insertPos++,0,{
 			func: body
 			, finalBody: final
 			, isCatchBody: true
-			, trylevel: this._trylevel --
+			, trylevel:  this._trylevel --
 			, name: body.name
 		}) ;
 		return this ;
@@ -58,28 +59,28 @@
 			func.call(this,i,{
 				func: args[i]
 				, presetArgs: presetArgs
-				, trylevel: this._trylevel
+				, trylevel:  this._trylevel
 				, name: args[i].name
 			}) ;
 		}
 		return this ;
 	}
 	Steps.prototype.step = function(){
-		return this._eachSteps(arguments,function(i,step){
+		return this.__$ocsteps$._eachSteps(arguments,function(i,step){
 			this._steps.splice(this._insertPos++,0,step) ;
 		}) ;
 	}
 	Steps.prototype.appendStep = function(){
-		return this._eachSteps(arguments,function(i,step){
+		return this.__$ocsteps$._eachSteps(arguments,function(i,step){
 			this._steps.push(step) ;
 		}) ;
 	}
 	Steps.prototype.hold = function(){
-		var step = this.current ;
-		
+		var step = this.__$ocsteps$.current ;
+
 		step.recv || (step.recv=[]) ;
 		var holdIndex = step.recv.length ;
-		
+
 		var names = [], steps = [] ;
 		for(var i=0;i<arguments.length;i++)
 			(typeof arguments[i]=='function'? steps: names).push(arguments[i]) ;
@@ -88,10 +89,10 @@
 			this._steps.splice(this._insertPos++,0,_step) ;
 			steps[i] = _step ;
 		}) ;
-		
+
 		step._holdsCounter || (step._holdsCounter=0) ;
 		step._holdsCounter ++ ;
-		
+
 		var callbacked = false ;
 		return (function(){
 			// 只调用一次有效
@@ -108,13 +109,13 @@
 			// 设置 step 的 presetArgs 参数
 			for(var i=0;i<steps.length;i++)
 				steps[i].presetArgs = step.recv[holdIndex] ;
-			
-			(--step._holdsCounter)<1 && this._doOnNextTick() ;
+
+			(--step._holdsCounter)<1 && this.__$ocsteps$._doOnNextTick() ;
 
 		}).bind(this) ;
 	}
-	
-	Steps.prototype.rewind = function(){ this._seek = 0 ; this._doOnNextTick() }
+
+	Steps.prototype.rewind = function(){  this._seek = 0 ; this.__$ocsteps$._doOnNextTick() }
 	Steps.prototype.terminate = function(){ throw {signal:'terminate'} ; }
 	Steps.prototype.break = function(){
 		this.current.return = arguments ;
@@ -124,19 +125,19 @@
 		if(presetArgs) return presetArgs ;
 		if(this._startupArgs)
 		{
-			var startupArgs = this._startupArgs ;
+			var startupArgs =  this._startupArgs ;
 			this._startupArgs = undefined ;
 			return startupArgs ;
 		}
 		if(!this.prev) return ;
-		return ( this.prev.recv && this.prev.recv[this.prev.recv.length-1] )
-				|| ( (this.prev.return&&this.prev.return.callee)? this.prev.return: [this.prev.return] ) ;
+		return ( this.__$ocsteps$.prev.recv && this.__$ocsteps$.prev.recv[this.prev.recv.length-1] )
+				|| ( (this.prev.return&&this.prev.return.callee)? this.__$ocsteps$.prev.return: [this.prev.return] ) ;
 	}
 	Steps.prototype.do = function(tickid){
 		// 暂停
-		if(!this.uncatchException && this.current && this.current._holdsCounter)
+		if(!this.uncatchException && this.__$ocsteps$.current && this.__$ocsteps$.current._holdsCounter)
 			return this ;
-			
+
 		if(tickid!=this._tickid)
 			return ;
 		if( (this._tickid++) == 0 )
@@ -147,24 +148,24 @@
 		// 设置 prev 状态
 		if(this.current && !this.current.isCatchBody)
 		{
-			this.prev = this.current ;
-			this.prevReturn = this.prev.return ;
-			this.recv = this.prev.recv ;
+			this.prev = this.__$ocsteps$.current ;
+			this.prevReturn = this.__$ocsteps$.prev.return ;
+			this.recv = this.__$ocsteps$.prev.recv ;
 		}
 
 		// 整个任务链结束
 		if(this._seek>=this._steps.length)
 		{
 			// 处理 uncatch 异常
-			if( this.uncatchException )
+			if( this.__$ocsteps$.uncatchException )
 			{
-				if( this._events['uncatch'].length )
+				if(  this._events['uncatch'].length )
 				{
 					this.emit("uncatch",this.uncatchException) ;
 				}
 				else
 				{
-					throw this.uncatchException ;
+					throw this.__$ocsteps$.uncatchException ;
 				}
 			}
 			// done 事件
@@ -174,12 +175,12 @@
 		}
 
 		// 重置状态
-		this.current = this._steps[this._seek] ;
-		this._insertPos = this._seek + (this.current.block? 0: 1) ;
-		this._trylevel = this.current.trylevel ;
-		
+		this.current =  this._steps[this._seek] ;
+		this._insertPos =  this._seek + (this.current.block? 0: 1) ;
+		this._trylevel = this.__$ocsteps$.current.trylevel ;
+
 		try{
-			if( this.current.isCatchBody )
+			if( this.__$ocsteps$.current.isCatchBody )
 			{
 				if(this.current.finalBody)
 				{
@@ -188,15 +189,15 @@
 
 				if(this.uncatchException)
 				{
-					var uncatchException = this.uncatchException ;
+					var uncatchException = this.__$ocsteps$.uncatchException ;
 					this.uncatchException = undefined ;
 
-					this.current.func.call( this.object||this, uncatchException ) ;
+					this.current.func.call( this.__$ocsteps$.object||this, uncatchException ) ;
 				}
 			}
 			else
 			{
-				this.current.return = this.current.func.apply( this.object||this, this._makesureStepArgs(this.current.presetArgs) ) ;
+				this.current.return = this.__$ocsteps$.current.func.apply( this.__$ocsteps$.object||this, this.__$ocsteps$._makesureStepArgs(this.current.presetArgs) ) ;
 			}
 
 			if( !this.current.block )
@@ -214,25 +215,25 @@
 				}
 				else if(err.signal=='terminate')
 				{
-					this._seek = this._steps.length ;
+					this._seek =  this._steps.length ;
 				}
 			}
 			else
 				this.throw(err) ;
 		}
 
-		return this._doOnNextTick() ;
+		return this.__$ocsteps$._doOnNextTick() ;
 	}
 	Steps.prototype.throw = function(err){
 		// 跳过同 trylevel 下的后续 step
-		for( this._seek ++; this._seek<this._steps.length; this._seek ++ )
-			if( this._steps[this._seek].isCatchBody && this._steps[this._seek].trylevel<=this.current.trylevel )
+		for(  this._seek ++;  this._seek<this._steps.length;  this._seek ++ )
+			if(  this._steps[this._seek].isCatchBody &&  this._steps[this._seek].trylevel<=this.current.trylevel )
 				break ;
-		this.uncatchException = this.current.exception = err ;
+		this.uncatchException = this.__$ocsteps$.current.exception = err ;
 	}
 	Steps.prototype._doOnNextTick = function(){
 		var steps = this ;
-		var tickid = this._tickid ;
+		var tickid =  this._tickid ;
 		process&&process.nextTick?
 			process.nextTick(function(){ steps.do(tickid) }) :
 			setTimeout(function(){ steps.do(tickid) },0) ;
@@ -250,7 +251,7 @@
 				forkreturn = arguments ;
 			} ) ;
 			// 执行
-			var release = this.hold() ;
+			var release = this.__$ocsteps$.hold() ;
 			fork.once("done",function(){
 				release.apply(this,forkreturn) ;
 			}).once("uncatch",function(error){
@@ -261,18 +262,18 @@
 		return fork ;
 	}
     Steps.prototype.loop = function(){
-        return this._eachSteps(arguments,function(i,step){
+        return this.__$ocsteps$._eachSteps(arguments,function(i,step){
             step.block = true ;
-            this._steps.splice(this._insertPos++,0,step) ;
+             this._steps.splice(this._insertPos++,0,step) ;
         }) ;
     }
     Steps.prototype.each = function(arr,step){
         if(arr.constructor==Array)
             for(var i=0;i<arr.length;i++)
-                this.step([i,arr[i]],step) ;
+                this.__$ocsteps$.step([i,arr[i]],step) ;
         else
             for(var key in arr)
-                this.step([key,arr[key]],step) ;
+                this.__$ocsteps$.step([key,arr[key]],step) ;
     }
 	
 	// 导出 ---
