@@ -1,6 +1,12 @@
 var Steps = require("../index.js") ;
 var should = require("should") ;
 
+function asyncFunction(ms,args,callback){
+	setTimeout(function(){
+		callback.apply(null,args) ;
+	},ms) ;
+}
+
 describe("ocSteps",function(){
 
 	describe("#exception",function(){
@@ -108,8 +114,37 @@ describe("ocSteps",function(){
 				done() ;
 			}) () ;
 		}) ;
-	
-	
+
+
+		it("throw in hold step",function(done){
+
+			var flag = 0 ;
+
+			Steps(
+				function(){
+					(flag++).should.be.eql(0) ;
+				}
+				, function(){
+
+					(flag++).should.be.eql(1) ;
+
+					asyncFunction(100,[],this.hold(function(){
+						throw new Error("hi") ;
+					})) ;
+				}
+
+				, function(){
+					(flag++).should.be.eql(2) ;
+				}
+			).uncatch(function(err){
+					(flag++).should.be.eql(2) ;
+					err.message.should.be.eql("hi") ;
+			}).done(function(err){
+				(flag++).should.be.eql(3) ;
+				err.message.should.be.eql("hi") ;
+				done() ;
+			}) () ;
+		}) ;
 	
 		// ----
 		it("uncatch",function(done){
