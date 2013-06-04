@@ -260,12 +260,20 @@
 
 		return fork ;
 	}
-	Steps.prototype.loop = function(){
-		return this._eachSteps(arguments,function(i,step){
-			step.block = true ;
-			this._steps.splice(this._insertPos++,0,step) ;
-		}) ;
-	}
+    Steps.prototype.loop = function(){
+        return this._eachSteps(arguments,function(i,step){
+            step.block = true ;
+            this._steps.splice(this._insertPos++,0,step) ;
+        }) ;
+    }
+    Steps.prototype.each = function(arr,step){
+        if(arr.constructor==Array)
+            for(var i=0;i<arr.length;i++)
+                this.step([i,arr[i]],step) ;
+        else
+            for(var key in arr)
+                this.step([key,arr[key]],step) ;
+    }
 	
 	// 导出 ---
 	function steps(){

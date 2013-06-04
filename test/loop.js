@@ -97,5 +97,55 @@ describe("ocSteps",function(){
 				done() ;
 			}) () ;
 		}) ;
+
+
+
+
+        it("using each() for array",function(done){
+
+            var array = ['a','b','c','d'] ;
+            var flag = 0 ;
+
+            Steps(
+                function(){
+                    this.each(array,function(i,v){
+                        array[i].should.be.eql(v) ;
+                        (flag++).should.be.eql( i ) ;
+                    }) ;
+                }
+                , function(){
+                    (flag++).should.be.eql(4) ;
+                }
+            )
+                .done(function(){
+                    (flag++).should.be.eql(5) ;
+                    done() ;
+                }) () ;
+        }) ;
+
+
+        it("using each() for object",function(done){
+
+            var obj = { a:0,b:1,c:2,d:3 } ;
+            var flag = 0 ;
+
+            Steps(
+                function(){
+                    this.each(obj,function(k,v){
+                        obj[k].should.be.eql(v) ;
+                        (flag++).should.be.eql( v ) ;
+                    }) ;
+                }
+                , function(){
+                    (flag++).should.be.eql(4) ;
+                }
+            )
+                .done(function(){
+                    (flag++).should.be.eql(5) ;
+                    done() ;
+                }) () ;
+        }) ;
+
+
 	}) ;
 }) ;

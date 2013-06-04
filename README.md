@@ -26,6 +26,8 @@ __ocSteps__ 参考了 [Step](https://github.com/creationix/step) 的设计，但
 * [绑定对象] (#-12)
 * [分支] (#-13)
 * [循环] (#-14)
+    * loop (#loop)
+    * each (#each)
 * [在浏览器中使用] (#-15)
 
 
@@ -600,7 +602,7 @@ Steps(
 		console.log("step 3") ;
 	}
 
-).on("done",function(err){
+).done(function(err){
 	console.log("over.") ;
 }) () ;
 ```
@@ -646,7 +648,7 @@ Steps(
 		console.log("step 3") ;
 	}
 
-).on("done",function(){
+).done(function(err){
 	console.log("over.") ;
 }) () ;
 ```
@@ -762,7 +764,7 @@ Better way: the value of variable i in each loop has saved, and then pass to ste
 
 ## 绑定对象
 
-可以用 `bind()` 将任务链绑定到一个对象上（这样就可以少用一个闭包变量了……），然后在 step function 内，this 能够继承该对象的所有属性和方法。
+可以用 `bind()` 将任务链绑定到一个对象上（这样就可以少用一个闭包变量了），然后在 step function 内，this 能够继承该对象的所有属性和方法。
 
 
 ```javascript
@@ -799,6 +801,8 @@ Steps(
 
 
 ## 循环
+
+### loop
 
 ```javascript
 
@@ -911,6 +915,63 @@ step in loop 3
 break 4
 ```
 
+> `loop()` 实际上和 `while(1)` 等效 。
+
+### each
+
+`each()` 是更有用的循环方式，它支持`对象成员`和`数组元素`的遍历。
+
+```javascript
+var fs = require("fs") ;
+
+function printDir(folder,callback){
+
+	Steps(
+
+		function ()
+		{
+			fs.readdir(folder,this.hold()) ;
+		}
+		, function (err,files)
+		{
+			if(err) throw new Error(err) ;
+			
+			// 遍历所有目录成员
+			this.each(files,function(i,filename){
+			
+				var path = folder+'/'+filename ;
+					
+				fs.stat(path,function(err,stat)
+				{
+					if(err) throw new Error(err) ;
+					
+					if(stat.isDirectory())
+					{
+						console.log('folder:',path) ;
+						
+						// 递归子目录
+						printDir(path,this.hold()) ;
+					}
+					else
+					{
+						console.log('file:',path) ;
+					}
+				
+				}) ;
+			}) ;
+		}
+		
+	).done(function(err){
+		callback && callback(err) ;
+	}) () ;
+
+}
+
+
+// 深度优先遍历目录
+printDir("/some/folder") ;
+
+```
 
 ## 分支
 
