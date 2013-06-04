@@ -26,8 +26,8 @@ __ocSteps__ 参考了 [Step](https://github.com/creationix/step) 的设计，但
 * [绑定对象] (#-12)
 * [分支] (#-13)
 * [循环] (#-14)
-    * loop (#loop)
-    * each (#each)
+    * [loop] (#loop)
+    * [each] (#each)
 * [在浏览器中使用] (#-15)
 
 
