@@ -1,7 +1,6 @@
 (function(){
 	function Steps(){
 		var steps = function(){
-			if( !steps._steps[steps._seek] ) return ;
 			arguments.length && ( steps._startupArgs = arguments ) ;
 			steps._doOnNextTick() ;
 		} ;

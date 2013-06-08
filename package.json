@@ -1,6 +1,6 @@
 {
   "name": "ocsteps",
-  "version": "0.2.13",
+  "version": "0.2.14",
   "description": "ocSteps 是一个JavaScript异步执行辅助工具，主要用于支持 Node.js 中的大量异步API以及操作，以及前端浏览器里的异步任务（例如Ajax）。",
   "main": "PackageManager.js",
   "scripts": {
