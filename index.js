@@ -252,6 +252,7 @@
 			else
 				for(var key in arr)
 					steps.step([key,arr[key]],step) ;
+            return this ;
 		}
 
 		steps.step.apply(steps,arguments) ;
