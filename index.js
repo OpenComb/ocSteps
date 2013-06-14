@@ -162,11 +162,14 @@
 			if(steps._seek>=steps._steps.length){
 				// 处理 uncatch 异常
 				if( steps.uncatchException ){
-					if(  steps._events['uncatch'].length )
-						steps.__emit("uncatch",steps.uncatchException) ;
+					steps.__emit("uncatch",steps.uncatchException) ;
+					// 既没有 uncatch 也没有 done 事件，简单打印错误
+					if( !steps._events['uncatch'].length && !steps._events['done'].length )
+						console.log(steps.uncatchException.toString()) ;
 				}
 				// done 事件
 				steps.__emit("done",steps.uncatchException||null) ;
+
 				// 停止
 				return steps ;
 			}
