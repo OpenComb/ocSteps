@@ -3,7 +3,7 @@
 		var steps = function(){
 			arguments.length && ( steps._startupArgs = arguments ) ;
 			steps._doOnNextTick() ;
-			return this ;
+			return steps ;
 		} ;
 		// 构造对象
 		steps._steps = [] ;
