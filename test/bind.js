@@ -21,7 +21,7 @@ describe("ocSteps",function(){
 					this.b = '098' ;
 					c.should.be.eql('789') ;
 				}			)
-			.on("done",function(){
+			.done(function(){
 				// 绑定是只读的
 				object.b.should.be.eql('098') ;
 				done() ;

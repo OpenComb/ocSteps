@@ -19,13 +19,13 @@
 		steps._startupArgs ;
 		steps.object = undefined ;
 
-		steps.on = steps.once = function(eventName,func){
+		steps.__once = function(eventName,func){
 			func &&  steps._events[eventName] &&  steps._events[eventName].push(func) ;
 			return steps ;
 		}
-		steps.done = function(func){ steps.once("done",func) ; return steps ;}
-		steps.uncatch = function(func){ steps.once("uncatch",func) ; return steps ;}
-		steps.emit = function(eventName){
+		steps.done = function(func){ steps.__once("done",func) ; return steps ;}
+		steps.uncatch = function(func){ steps.__once("uncatch",func) ; return steps ;}
+		steps.__emit = function(eventName){
 			var args = [] ;
 			for( var i=1;i<arguments.length;i++ ) args.push(arguments[i]) ;
 			if(  steps._events[eventName] &&  steps._events[eventName].length )
@@ -116,6 +116,12 @@
 
 			}).bind(steps) ;
 		}
+		steps.holdButThrowError = function(){
+			return this.hold(function(err){
+				if(err) throw err ;
+				return arguments ;
+			}) ;
+		}
 
 		steps.rewind = function(){  steps._seek = 0 ; steps._doOnNextTick() }
 		steps.terminate = function(){ throw {signal:'terminate'} ; }
@@ -142,7 +148,7 @@
 			if(tickid!=steps._tickid)
 				return ;
 			if( (steps._tickid++) == 0 )
-				steps.emit('start') ;
+				steps.__emit('start') ;
 
 			// 设置 prev 状态
 			if(steps.current && !steps.current.isCatchBody){
@@ -156,12 +162,10 @@
 				// 处理 uncatch 异常
 				if( steps.uncatchException ){
 					if(  steps._events['uncatch'].length )
-						steps.emit("uncatch",steps.uncatchException) ;
-					else
-						throw steps.uncatchException ;
+						steps.__emit("uncatch",steps.uncatchException) ;
 				}
 				// done 事件
-				steps.emit("done",steps.uncatchException||null) ;
+				steps.__emit("done",steps.uncatchException||null) ;
 				// 停止
 				return steps ;
 			}
@@ -171,6 +175,10 @@
 			steps._insertPos =  steps._seek + (steps.current.block? 0: 1) ;
 			steps._trylevel = steps.current.trylevel ;
 
+            if(!steps.current.func.apply)
+            {
+                console.log( steps.current.func)
+            }
 			try{
 				if( steps.current.isCatchBody ){
 					if(steps.current.finalBody)
@@ -230,9 +238,9 @@
 				} ) ;
 				// 执行
 				var release = master.hold() ;
-				fork.once("done",function(){
+				fork.__once("done",function(){
 					release.apply(master,forkreturn) ;
-				}).once("uncatch",function(error){
+				}).__once("uncatch",function(error){
 					master.uncatchException = error ;
 				}) () ;
 			}) ;

@@ -1,4 +1,5 @@
 var Steps = require("../index.js") ;
+var should = require("should") ;
 
 function asyncFunction(ms,args,callback){
 	setTimeout(function(){
@@ -271,5 +272,45 @@ describe("ocSteps",function(){
 			) () ;
 
 		}) ;
+
+
+
+		it("using this.holdButThrowError()",function(done){
+
+			var flag = 0 ;
+			Steps(
+				function(){
+					(flag++).should.be.eql(0) ;
+					asyncFunction(0,[],this.holdButThrowError()) ;
+				}
+				, function(){
+					(flag++).should.be.eql(1) ;
+					asyncFunction(0,[null,1,2,3],this.holdButThrowError()) ;
+				}
+				, function(err,a,b,c){
+					(flag++).should.be.eql(2) ;
+					should.not.exist(err) ;
+					a.should.be.eql(1) ;
+					b.should.be.eql(2) ;
+					c.should.be.eql(3) ;
+
+					asyncFunction(0,[new Error("some error words")],this.holdButThrowError()) ;
+				}
+
+				// unreach
+				, function(){
+					(flag++).should.be.eql(3) ;
+				}
+
+			).done(function(err){
+				err.message.should.be.eql("some error words") ;
+				(flag++).should.be.eql(3) ;
+				done() ;
+			})
+			() ;
+
+		}) ;
+
+
 	}) ;
 }) ;

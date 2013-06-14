@@ -201,7 +201,6 @@ var steps = Steps(
 
 
 
-
 ### 暂停计数器
 
 > 可以连续调用多次 `hold()` ，每调用一次 `hold()` 任务链的暂停计数器 +1，并返回一个 release 函数，暂停计数器>0 时任务链暂停；
@@ -303,6 +302,43 @@ Steps(
 ```
 
 
+###  holdButThrowError()
+
+可以使用 `holdButThrowError()` 替代 `hold()`，``holdButThrowError()`会将回调时的第一个参数作为错误自动抛出，
+
+```javascript
+Steps(
+
+	function(){
+		fs.readFile('/some/file/path',this.holdButThrowError())
+	}
+
+	, function(err,buff){
+		// 此处不必检查错误，如果遇到错误，已经被 this.holdButThrowError() 自动抛出
+		console.log(buff.toString()) ;
+	}
+
+).done(function(err){
+	// 在此处理错误
+	if(err)
+	{
+		console.log(err) ;
+	}
+})
+
+```
+
+`holdButThrowError()` 相当于：
+```javascript
+this.hold(function(err){
+	if(err)
+	{
+		throw err ;
+	}
+	// 参数传给下一个 step function
+	return arguments ;
+})
+```
 
 如果不需要中间的某个参数，可以用 `null` 占位：
 
@@ -621,8 +657,6 @@ over .
 
 * 可以在 `done` 的事件函数里使用 `prevReturn` 和 `recv` 访问最后一个 step function 的执行结果。
 
-* 可以用 `done(function)` 替代 `on("done",func)`
-
 ### 事件：uncatch
 
 任务链上抛出异常没有被任何 catch(body) 截获，最后就会触发 uncatch 事件。 uncatch 事件不会取消 done 事件
@@ -648,12 +682,17 @@ Steps(
 		console.log("step 3") ;
 	}
 
-).done(function(err){
+)
+.uncatch(function(err){
+    console.log("uncatch err") ;
+})
+.done(function(err){
 	console.log("over.") ;
-}) () ;
+})
+() ;
 ```
 
-可以用 `uncatch(function)` 替代 `on("done",func)`
+会先执行 uncatch 再执行 done 。
 
 ## 绑定参数
 

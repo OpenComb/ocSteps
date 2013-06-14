@@ -26,7 +26,7 @@ describe("ocSteps",function(){
 					return ++i ;
 				}
 				
-			).on("done",function(){
+			).done(function(){
 				arr.should.have.length(3) ;
 				arr.should.eql([1,2,3]) ;
 				done() ;

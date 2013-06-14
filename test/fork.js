@@ -42,7 +42,7 @@ describe("ocSteps",function(){
 					i.should.be.eql(4) ;
 				}
 				
-			).on("done",function(){
+			).done(function(){
 				(flag++).should.be.eql(5) ;
 				done() ;
 			}) () ;
@@ -88,7 +88,7 @@ describe("ocSteps",function(){
 					should.strictEqual(undefined,i) ;
 				}
 
-			).on("done",function(){
+			).done(function(){
 				(flag++).should.be.eql(5) ;
 				done() ;
 			}) () ;
@@ -114,7 +114,7 @@ describe("ocSteps",function(){
 					(flag++).should.be.eql(2) ;
 				}
 
-			).on("done",function(){
+			).done(function(){
 				(flag++).should.be.eql(3) ;
 				done() ;
 			}) () ;

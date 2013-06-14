@@ -29,7 +29,7 @@ describe("ocSteps",function(){
 					t.should.be.eql(5) ;
 				}
 			)
-			.on("done",function(){
+			.done(function(){
 				done() ;
 			}) () ;
 		}) ;
@@ -55,7 +55,7 @@ describe("ocSteps",function(){
 					(new Date()-startTime).should.be.above(10*4-1) ;
 				}
 			)
-			.on("done",function(){
+			.done(function(){
 				done() ;
 			}) () ;
 		}) ;
@@ -93,7 +93,7 @@ describe("ocSteps",function(){
 					i.should.be.eql(10) ;
 				}
 			)
-			.on("done",function(){
+			.done(function(){
 				done() ;
 			}) () ;
 		}) ;

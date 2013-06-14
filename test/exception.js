@@ -52,9 +52,9 @@ describe("ocSteps",function(){
 				, function(){
 					(flag++).should.be.eql(6) ;
 				}
-			).on('uncatch',function(){
+			).uncatch(function(){
 				should.fail('unreached!') ;
-			}).on('done',function(){
+			}).done(function(){
 				(flag++).should.be.eql(7) ;
 				done() ;
 			}) () ;
@@ -106,10 +106,10 @@ describe("ocSteps",function(){
 				, function(){
 					(flag++).should.be.eql(5) ;
 				}
-			).on('uncatch',function(){
+			).uncatch(function(){
 				(flag++).should.be.eql(6) ;
 				should.fail('unreached!') ;
-			}).on('done',function(){
+			}).done(function(){
 				(flag++).should.be.eql(6) ;
 				done() ;
 			}) () ;
@@ -159,10 +159,10 @@ describe("ocSteps",function(){
 				, function(){
 					should.fail('unreached!') ;				
 				}
-			).on('uncatch',function(error){
+			).uncatch(function(error){
 				(flag++).should.be.eql(1) ;
 				error.message.should.be.eql("some error occured") ;
-			}).on('done',function(){
+			}).done(function(){
 				(flag++).should.be.eql(2) ;			
 				done() ;
 			}) () ;
@@ -189,7 +189,7 @@ describe("ocSteps",function(){
 						(flag++).should.be.eql(1) ;				
 					}
 				) ;
-			}).on("done",function(){
+			}).done(function(){
 				(flag++).should.be.eql(3) ;
 				done() ;
 			}) () ;
@@ -211,7 +211,7 @@ describe("ocSteps",function(){
 						(flag++).should.be.eql(1) ;				
 					}
 				) ;
-			}).on("done",function(){
+			}).done(function(){
 				(flag++).should.be.eql(2) ;
 				done() ;
 			}) () ;
@@ -247,7 +247,7 @@ describe("ocSteps",function(){
 					}
 				) ;
 				
-			}).on("done",function(){
+			}).done(function(){
 				(flag++).should.be.eql(4) ;
 				done() ;
 			}) () ;
@@ -290,7 +290,7 @@ describe("ocSteps",function(){
 					}
 				) ;
 				
-			}).on("uncatch",function(){
+			}).uncatch(function(){
 				(flag++).should.be.eql(2) ;
 				done() ;
 			}) () ;
@@ -326,7 +326,7 @@ describe("ocSteps",function(){
 					}
 				) ;
 				
-			}).on("uncatch",function(){
+			}).uncatch(function(){
 				done() ;
 			}) () ;
 

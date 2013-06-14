@@ -30,7 +30,7 @@ describe("ocSteps",function(){
 					(flag++).should.be.eql(4) ;
 				}
 				
-			).on("done",function(){
+			).done(function(){
 				(flag++).should.be.eql(5) ;
 				done() ;
 			}) () ;
@@ -87,7 +87,7 @@ describe("ocSteps",function(){
 					return flag
 				}
 				
-			).on("done",function(){
+			).done(function(){
 				(flag++).should.be.eql(6) ;
 				done() ;
 			}) () ;
@@ -125,7 +125,7 @@ describe("ocSteps",function(){
 					(flag++).should.be.eql(1) ;
 				}
 				
-			).on("done",function(){
+			).done(function(){
 					(flag++).should.be.eql(5) ;
 				done() ;
 			}) () ;
@@ -161,7 +161,7 @@ describe("ocSteps",function(){
 					(flag++).should.be.eql(1) ;
 				}
 				
-			).on("done",function(){
+			).done(function(){
 				(flag++).should.be.eql(5) ;
 				done() ;
 			}) () ;
@@ -209,7 +209,7 @@ describe("ocSteps",function(){
 					(flag++).should.be.eql(4) ;
 				}
 				
-			).on("done",function(){
+			).done(function(){
 				(flag++).should.be.eql(5) ;
 				done() ;
 			}) () ;
@@ -235,7 +235,7 @@ describe("ocSteps",function(){
 					return i+1 ;
 				}
 				
-			).on("done",function(){
+			).done(function(){
 				this.prev.return.should.be.eql(3) ;
 				done() ;
 			}) (0) ;

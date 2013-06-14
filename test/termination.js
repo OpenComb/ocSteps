@@ -22,7 +22,7 @@ describe("ocSteps",function(){
 				}
 	
 				
-			).on("done",function(){
+			).done(function(){
 				(flag++).should.be.eql(1) ;
 				done() ;
 			}) () ;
