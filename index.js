@@ -40,7 +40,6 @@
 			steps.object = object ;
 			return steps ;
 		}
-
 		steps.try = function(){
 			steps._trylevel ++ ;
 			return steps.step.apply(steps,arguments) ;
@@ -208,11 +207,11 @@
 						steps._seek ++ ;
 					else if(err.signal=='terminate')
 						steps._seek =  steps._steps.length ;
+					else if(err.signal=='goto') ;
 				}
 				else
 					steps.throw(err) ;
 			}
-
 			return steps._doOnNextTick() ;
 		}
 		steps.throw = function(err){
@@ -221,13 +220,19 @@
 				if(  steps._steps[steps._seek].isCatchBody &&  steps._steps[steps._seek].trylevel<=steps.current.trylevel )
 					break ;
 			steps.uncatchException = steps.current.exception = err ;
+			return steps ;
+		}
+		steps.goto = function(funcName){
+			for(  steps._seek++;  steps._seek<steps._steps.length;  steps._seek ++ )
+				if(  steps._steps[steps._seek].func.name==funcName )
+					throw {signal:'goto'} ;
+			throw new Error("not found step function named "+funcName) ;
 		}
 		steps._doOnNextTick = function(){
 			var tickid =  steps._tickid ;
 			process&&process.nextTick?
 				process.nextTick(function(){ steps.do(tickid) }) :
 				setTimeout(function(){ steps.do(tickid) },0) ;
-
 			return steps ;
 		}
 		steps.fork = function(){

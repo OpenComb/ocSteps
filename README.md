@@ -18,6 +18,7 @@ __ocSteps__ 参考了 [Step](https://github.com/creationix/step) 的设计，但
 	* [recv 和 prevReturn] (#recv--prevreturn)
 * [动态任务链] (#-7)
 * [终止任务链] (#-8)
+* [goto()] (#goto-)
 * [异常处理] (#-9)
 * [事件] (#-10)
 	* [done] (#done)
@@ -535,6 +536,34 @@ Steps(
 > 通过 `this.terminate()` 终止的任务链，仍然会触发`done`事件。
 
 
+## goto()
+
+```javascript
+var Steps = require("ocsteps") ;
+
+Steps(
+
+	function step1(){
+		console.log("step1") ;
+	}
+
+	,  function step2(){
+		this.goto("step3")
+        console.log("step2") ;
+    }
+
+	, function step3(){
+        console.log("step3") ;
+    }
+
+) () ;
+```
+
+打印：
+```
+step1
+step3
+```
 
 ## 异常处理
 
