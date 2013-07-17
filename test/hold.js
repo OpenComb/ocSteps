@@ -312,5 +312,52 @@ describe("ocSteps",function(){
 		}) ;
 
 
+
+		it("using this.holdButThrowError() receive named args",function(done){
+
+			var flag = 0 ;
+			Steps(
+				function(){
+					(flag++).should.be.eql(0) ;
+					asyncFunction(0,[],this.holdButThrowError()) ;
+				}
+				, function(){
+					asyncFunction(0,[null,1,2,3],this.hold('err1','a','b','c')) ;
+					(flag++).should.be.eql(1) ;
+				}
+				, function(){
+					asyncFunction(0,[null,4],this.holdButThrowError('err2','d')) ;
+					(flag++).should.be.eql(2) ;
+				}
+				, function(err,d){
+					should.not.exist(err) ;
+					console.log(this.recv) ;
+					this.recv.d.should.be.eql(4) ;
+					this.recv.a.should.be.eql(1) ;
+					this.recv.b.should.be.eql(2) ;
+					this.recv.c.should.be.eql(3) ;
+
+					d.should.be.eql(4) ;
+					(flag++).should.be.eql(3) ;
+
+					asyncFunction(0,[new Error("some error words")],this.holdButThrowError()) ;
+				}
+
+				// unreach
+				, function(){
+					(flag++).should.be.eql(4) ;
+				}
+
+			).done(function(err){
+					console.log(err) ;
+					console.log(err.stack) ;
+					err.message.should.be.eql("some error words") ;
+					(flag++).should.be.eql(4) ;
+					done() ;
+				})
+				() ;
+
+		}) ;
+
 	}) ;
 }) ;

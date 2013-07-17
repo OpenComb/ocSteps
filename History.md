@@ -1,3 +1,8 @@
+0.2.21 / 2013-7-17
+==================
+
+	* holdButThrowError(errorArgName,arg1Name,arg2Name,arg3Name,...)
+	* hold() 和 holdButThrowError() 设置的 release参数会在任务链上一直累计
 
 0.2.20 / 2013-6-21
 ==================

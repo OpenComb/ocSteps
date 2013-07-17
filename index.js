@@ -10,7 +10,7 @@
 		steps._trylevel = 0 ;
 		steps.uncatchException = undefined ;
 		steps.prevReturn = undefined ;
-		steps.recv = [] ;
+		steps.recv = {} ;
 		steps._events = { 'start':[], 'uncatch': [], 'done': [] }
 		steps._seek = 0 ;
 		steps._insertPos = 0 ;
@@ -105,7 +105,10 @@
 				// 搜集到 recv 里
 				step.recv[holdIndex] = arguments ;
 				for(var i=0;i<names.length;i++){
-					names[i] && (step.recv[names[i].toString()] = arguments[i]) ;
+					if(names[i]){
+						var name = names[i].toString() ;
+						steps.recv[name] = step.recv[name] = arguments[i]
+					}
 				}
 
 				// 设置 step 的 presetArgs 参数
@@ -117,10 +120,12 @@
 			}).bind(steps) ;
 		}
 		steps.holdButThrowError = function(){
-			return this.hold(function(err){
+			arguments[arguments.length] = function(err){
 				if(err) throw err ;
 				return arguments ;
-			}) ;
+			}
+			arguments,arguments.length ++ ;
+			return this.hold.apply(this,arguments) ;
 		}
 
 		steps.rewind = function(){  steps._seek = 0 ; steps._doOnNextTick() }
@@ -154,7 +159,6 @@
 			if(steps.current && !steps.current.isCatchBody){
 				steps.prev = steps.current ;
 				steps.prevReturn = steps.prev.return ;
-				steps.recv = steps.prev.recv ;
 			}
 
 			// 整个任务链结束
